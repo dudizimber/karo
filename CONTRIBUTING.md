@@ -10,7 +10,7 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 ### Prerequisites
 
-- Go 1.21 or later
+- Go 1.24 or later
 - Docker
 - Kubernetes cluster (for testing)
 - kubectl

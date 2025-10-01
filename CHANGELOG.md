@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Infrastructure
 - **Kubernetes Support**: Compatible with Kubernetes 1.19+
-- **Go Runtime**: Built with Go 1.21 and controller-runtime v0.21.0
+- **Go Runtime**: Built with Go 1.24 and controller-runtime v0.21.0
 - **Container Images**: Multi-architecture container images (amd64/arm64)
 - **Helm Deployment**: Production-ready Helm chart with configurable values
 - **CI/CD Pipeline**: Automated testing, building, and security scanning

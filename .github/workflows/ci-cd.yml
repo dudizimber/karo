@@ -23,7 +23,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v6
       with:
-        go-version: '1.21'
+        go-version: '1.24'
         cache: true
 
     - name: Cache Go modules
@@ -93,7 +93,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v6
       with:
-        go-version: '1.21'
+        go-version: '1.24'
         cache: true
 
     - name: Run golangci-lint
@@ -114,7 +114,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v6
       with:
-        go-version: '1.21'
+        go-version: '1.24'
         cache: true
 
     - name: Verify manifests are valid
@@ -192,7 +192,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v6
       with:
-        go-version: '1.21'
+        go-version: '1.24'
         cache: true
 
     - name: Set up Kubernetes cluster
@@ -282,7 +282,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v6
       with:
-        go-version: '1.21'
+        go-version: '1.24'
         cache: true
 
     - name: Download binary artifact
