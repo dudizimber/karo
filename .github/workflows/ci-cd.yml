@@ -192,21 +192,26 @@ jobs:
         go-version: '1.24'
         cache: true
 
+    - name: Create kind config
+      run: |
+        cat > kind-config.yaml <<EOF
+        kind: Cluster
+        apiVersion: kind.x-k8s.io/v1alpha4
+        nodes:
+        - role: control-plane
+          kubeadmConfigPatches:
+          - |
+            kind: InitConfiguration
+            nodeRegistration:
+              kubeletExtraArgs:
+                node-labels: "ingress-ready=true"
+        EOF
+
     - name: Set up Kubernetes cluster
       uses: helm/kind-action@v1
       with:
         cluster_name: test-cluster
-        config: |
-          kind: Cluster
-          apiVersion: kind.x-k8s.io/v1alpha4
-          nodes:
-          - role: control-plane
-            kubeadmConfigPatches:
-            - |
-              kind: InitConfiguration
-              nodeRegistration:
-                kubeletExtraArgs:
-                  node-labels: "ingress-ready=true"
+        config: kind-config.yaml
 
     - name: Load Docker image into kind
       run: |
@@ -322,6 +327,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
+
+    - name: Log in to registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
