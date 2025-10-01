@@ -2,138 +2,138 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, dev ]
-    tags: [ 'v*' ]
+    branches: [main, dev]
+    tags: ["v*"]
   pull_request:
-    branches: [ main, dev ]
+    branches: [main, dev]
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: docker.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.24'
-        cache: true
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.24"
+          cache: true
 
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-    - name: Download dependencies
-      run: go mod download
+      - name: Download dependencies
+        run: go mod download
 
-    - name: Verify dependencies
-      run: go mod verify
+      - name: Verify dependencies
+        run: go mod verify
 
-    - name: Run go vet
-      run: go vet ./...
+      - name: Run go vet
+        run: go vet ./...
 
-    - name: Run go fmt
-      run: |
-        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
-          echo "Code is not formatted properly:"
-          gofmt -s -l .
-          exit 1
-        fi
+      - name: Run go fmt
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "Code is not formatted properly:"
+            gofmt -s -l .
+            exit 1
+          fi
 
-    - name: Generate code and manifests
-      run: |
-        make generate
-        make manifests
+      - name: Generate code and manifests
+        run: |
+          make generate
+          make manifests
 
-    - name: Verify generated code is up to date
-      run: |
-        if [ -n "$(git status --porcelain)" ]; then
-          echo "Generated code and manifests are not up to date. Please run 'make generate' and 'make manifests' and commit the changes."
-          git status --porcelain
-          git diff
-          exit 1
-        fi
+      - name: Verify generated code is up to date
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Generated code and manifests are not up to date. Please run 'make generate' and 'make manifests' and commit the changes."
+            git status --porcelain
+            git diff
+            exit 1
+          fi
 
-    - name: Run unit tests
-      run: go test -v -race -coverprofile=coverage.out ./...
+      - name: Run unit tests
+        run: go test -v -race -coverprofile=coverage.out ./...
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.out
-        flags: unittests
-        name: codecov-umbrella
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
 
-    - name: Run security scan with Gosec
-      uses: securego/gosec@master
-      with:
-        args: './...'
+      - name: Run security scan with Gosec
+        uses: securego/gosec@master
+        with:
+          args: "./..."
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.24'
-        cache: true
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.24"
+          cache: true
 
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v8
-      with:
-        version: latest
-        args: --timeout=5m
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          args: --timeout=5m
 
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: [test, lint]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.24'
-        cache: true
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.24"
+          cache: true
 
-    - name: Verify manifests are valid
-      run: |
-        make manifests
-        # Validate CRD structure
-        kubectl --dry-run=client apply -f config/crd/ || echo "CRD validation passed"
+      - name: Verify manifests are valid
+        run: |
+          make manifests
+          # Validate CRD structure
+          kubectl --dry-run=client apply -f config/crd/ || echo "CRD validation passed"
 
-    - name: Build binary
-      run: |
-        make build
-        ls -la bin/
+      - name: Build binary
+        run: |
+          make build
+          ls -la bin/
 
-    - name: Upload binary artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: alert-reaction-operator-binary
-        path: bin/manager
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alert-reaction-operator-binary
+          path: bin/manager
 
   docker:
     name: Docker Build and Push
@@ -144,37 +144,41 @@ jobs:
       packages: write
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Log in to registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Log in to docker
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=raw,value=latest,enable={{is_default_branch}}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   integration-test:
     name: Integration Tests
@@ -183,88 +187,88 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.24'
-        cache: true
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.24"
+          cache: true
 
-    - name: Create kind config
-      run: |
-        cat > kind-config.yaml <<EOF
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        nodes:
-        - role: control-plane
-          kubeadmConfigPatches:
-          - |
-            kind: InitConfiguration
-            nodeRegistration:
-              kubeletExtraArgs:
-                node-labels: "ingress-ready=true"
-        EOF
+      - name: Create kind config
+        run: |
+          cat > kind-config.yaml <<EOF
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+          - role: control-plane
+            kubeadmConfigPatches:
+            - |
+              kind: InitConfiguration
+              nodeRegistration:
+                kubeletExtraArgs:
+                  node-labels: "ingress-ready=true"
+          EOF
 
-    - name: Set up Kubernetes cluster
-      uses: helm/kind-action@v1
-      with:
-        cluster_name: test-cluster
-        config: kind-config.yaml
+      - name: Set up Kubernetes cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: test-cluster
+          config: kind-config.yaml
 
-    - name: Load Docker image into kind
-      run: |
-        # Get the image tag from previous job
-        IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        docker pull $IMAGE_TAG
-        kind load docker-image $IMAGE_TAG --name test-cluster
+      - name: Load Docker image into kind
+        run: |
+          # Get the image tag from previous job
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker pull $IMAGE_TAG
+          kind load docker-image $IMAGE_TAG --name test-cluster
 
-    - name: Install CRDs
-      run: |
-        kubectl apply -f config/crd/
+      - name: Install CRDs
+        run: |
+          kubectl apply -f config/crd/
 
-    - name: Deploy operator
-      run: |
-        # Update deployment to use the built image
-        IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        sed -i "s|alert-reaction-operator:latest|$IMAGE_TAG|g" config/manager/deployment.yaml
-        kubectl apply -f config/rbac/
-        kubectl apply -f config/manager/
+      - name: Deploy operator
+        run: |
+          # Update deployment to use the built image
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          sed -i "s|alert-reaction-operator:latest|$IMAGE_TAG|g" config/manager/deployment.yaml
+          kubectl apply -f config/rbac/
+          kubectl apply -f config/manager/
 
-    - name: Wait for operator to be ready
-      run: |
-        kubectl wait --for=condition=available --timeout=300s deployment/alert-reaction-operator
+      - name: Wait for operator to be ready
+        run: |
+          kubectl wait --for=condition=available --timeout=300s deployment/alert-reaction-operator
 
-    - name: Deploy test AlertReaction
-      run: |
-        kubectl apply -f examples/alertreactions.yaml
+      - name: Deploy test AlertReaction
+        run: |
+          kubectl apply -f examples/alertreactions.yaml
 
-    - name: Test webhook endpoint
-      run: |
-        # Port forward to webhook service
-        kubectl port-forward svc/alert-reaction-operator-webhook 9090:9090 &
-        sleep 10
-        
-        # Run webhook test
-        chmod +x scripts/test-webhook.sh
-        ./scripts/test-webhook.sh http://localhost:9090/webhook
-        
-        # Check if jobs were created
-        kubectl get jobs
-        kubectl get alertreactions
+      - name: Test webhook endpoint
+        run: |
+          # Port forward to webhook service
+          kubectl port-forward svc/alert-reaction-operator-webhook 9090:9090 &
+          sleep 10
 
-    - name: Collect logs on failure
-      if: failure()
-      run: |
-        echo "=== Operator Logs ==="
-        kubectl logs -l app=alert-reaction-operator
-        echo "=== AlertReactions ==="
-        kubectl get alertreactions -o yaml
-        echo "=== Jobs ==="
-        kubectl get jobs -o yaml
-        echo "=== Events ==="
-        kubectl get events
+          # Run webhook test
+          chmod +x scripts/test-webhook.sh
+          ./scripts/test-webhook.sh http://localhost:9090/webhook
+
+          # Check if jobs were created
+          kubectl get jobs
+          kubectl get alertreactions
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "=== Operator Logs ==="
+          kubectl logs -l app=alert-reaction-operator
+          echo "=== AlertReactions ==="
+          kubectl get alertreactions -o yaml
+          echo "=== Jobs ==="
+          kubectl get jobs -o yaml
+          echo "=== Events ==="
+          kubectl get events
 
   release:
     name: Release
@@ -276,47 +280,47 @@ jobs:
       packages: write
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.24'
-        cache: true
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.24"
+          cache: true
 
-    - name: Download binary artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: alert-reaction-operator-binary
-        path: bin/
+      - name: Download binary artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: alert-reaction-operator-binary
+          path: bin/
 
-    - name: Create release bundle
-      run: |
-        mkdir -p release
-        cp bin/manager release/alert-reaction-operator
-        cp -r config release/
-        cp -r examples release/
-        cp -r scripts release/
-        cp README.md LICENSE release/
-        tar -czf release/alert-reaction-operator-$(echo $GITHUB_REF | sed 's/refs\/tags\///').tar.gz -C release .
+      - name: Create release bundle
+        run: |
+          mkdir -p release
+          cp bin/manager release/alert-reaction-operator
+          cp -r config release/
+          cp -r examples release/
+          cp -r scripts release/
+          cp README.md LICENSE release/
+          tar -czf release/alert-reaction-operator-$(echo $GITHUB_REF | sed 's/refs\/tags\///').tar.gz -C release .
 
-    - name: Generate changelog
-      run: |
-        # Simple changelog generation
-        git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD > CHANGELOG.md
+      - name: Generate changelog
+        run: |
+          # Simple changelog generation
+          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD > CHANGELOG.md
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        body_path: CHANGELOG.md
-        files: |
-          release/*.tar.gz
-        generate_release_notes: true
-        draft: false
-        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+          files: |
+            release/*.tar.gz
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
 
   security-scan:
     name: Security Scan
@@ -325,20 +329,17 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-    - name: Log in to registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: "sarif"
+          output: "trivy-results.sarif"
 
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-
-    - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: 'trivy-results.sarif'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results.sarif"
