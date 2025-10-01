@@ -221,7 +221,7 @@ jobs:
       - name: Load Docker image into kind
         run: |
           # Get the image tag from previous job
-          IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
           docker pull $IMAGE_TAG
           kind load docker-image $IMAGE_TAG --name test-cluster
 
@@ -232,7 +232,7 @@ jobs:
       - name: Deploy operator
         run: |
           # Update deployment to use the built image
-          IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
           sed -i "s|alert-reaction-operator:latest|$IMAGE_TAG|g" config/manager/deployment.yaml
           kubectl apply -f config/rbac/
           kubectl apply -f config/manager/
@@ -336,7 +336,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
           format: "sarif"
           output: "trivy-results.sarif"
 
