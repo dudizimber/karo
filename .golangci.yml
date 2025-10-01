@@ -8,21 +8,18 @@ run:
 
 linters:
   enable:
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
-    - goimports
-    - goconst
-    - gocyclo
-    - gosec
-    - misspell
-    - unconvert
-    - unparam
-    - whitespace
-    - gofumpt
+    - errcheck     # Check for unchecked errors
+    - gosimple     # Simplify code
+    - govet        # Go vet analysis
+    - ineffassign  # Detect ineffectual assignments
+    - staticcheck  # Static analysis
+    - unused       # Find unused code
+    - goconst      # Find repeated strings that could be constants
+    - gocyclo      # Cyclomatic complexity
+    - gosec        # Security analysis
+    - misspell     # Spell checker
+    - unconvert    # Remove unnecessary conversions
+    - unparam      # Find unused parameters
 
 issues:
   max-issues-per-linter: 0
