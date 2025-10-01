@@ -1,0 +1,126 @@
+apiVersion: alertreaction.io/v1alpha1
+kind: AlertReaction
+metadata:
+  name: high-cpu-alert-reaction
+  namespace: default
+spec:
+  alertName: HighCPUUsage
+  actions:
+  - name: notify-slack
+    image: curlimages/curl:latest
+    command: ["curl"]
+    args:
+    - "-X"
+    - "POST"
+    - "-H"
+    - "Content-type: application/json"
+    - "--data"
+    - '{"text":"High CPU alert triggered on instance: $INSTANCE"}'
+    env:
+    - name: INSTANCE
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.instance"
+    - name: SLACK_WEBHOOK_URL
+      valueFrom:
+        secretKeyRef:
+          name: slack-webhook
+          key: url
+  - name: scale-deployment
+    image: bitnami/kubectl:latest
+    command: ["kubectl"]
+    args:
+    - "scale"
+    - "deployment"
+    - "my-app"
+    - "--replicas=5"
+    env:
+    - name: KUBECONFIG
+      value: "/etc/kubeconfig/config"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "64Mi"
+      limits:
+        cpu: "200m"
+        memory: "128Mi"
+---
+apiVersion: alertreaction.io/v1alpha1
+kind: AlertReaction
+metadata:
+  name: disk-space-alert-reaction
+  namespace: default
+spec:
+  alertName: LowDiskSpace
+  actions:
+  - name: cleanup-logs
+    image: alpine:latest
+    command: ["sh"]
+    args:
+    - "-c"
+    - "echo 'Cleaning up logs on $INSTANCE due to low disk space'"
+    env:
+    - name: INSTANCE
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.instance"
+    - name: DISK_USAGE
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.value"
+  - name: send-email
+    image: alpine:latest
+    command: ["sh"]
+    args:
+    - "-c"
+    - "echo 'Would send email about disk space issue on $INSTANCE'"
+    env:
+    - name: INSTANCE
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.instance"
+    - name: ALERT_SUMMARY
+      valueFrom:
+        alertRef:
+          fieldPath: "annotations.summary"
+---
+apiVersion: alertreaction.io/v1alpha1
+kind: AlertReaction
+metadata:
+  name: pod-crash-alert-reaction
+  namespace: default
+spec:
+  alertName: PodCrashLooping
+  actions:
+  - name: restart-deployment
+    image: bitnami/kubectl:latest
+    command: ["kubectl"]
+    args:
+    - "rollout"
+    - "restart"
+    - "deployment"
+    env:
+    - name: DEPLOYMENT_NAME
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.deployment"
+    - name: NAMESPACE
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.namespace"
+  - name: gather-logs
+    image: bitnami/kubectl:latest
+    command: ["kubectl"]
+    args:
+    - "logs"
+    - "--previous"
+    - "--tail=100"
+    env:
+    - name: POD_NAME
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.pod"
+    - name: NAMESPACE
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.namespace"

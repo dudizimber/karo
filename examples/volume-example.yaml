@@ -1,0 +1,175 @@
+apiVersion: alertreaction.io/v1alpha1
+kind: AlertReaction
+metadata:
+  name: volume-example-alert-reaction
+  namespace: default
+spec:
+  alertName: "HighDiskUsage"
+  volumes:
+  - name: config-volume
+    configMap:
+      name: alert-scripts-config
+      defaultMode: 0755
+  - name: temp-storage
+    emptyDir:
+      medium: "Memory"
+      sizeLimit: "1Gi"
+  - name: log-storage
+    persistentVolumeClaim:
+      claimName: "alert-logs-pvc"
+      readOnly: false
+  - name: host-proc
+    hostPath:
+      path: "/proc"
+      type: "Directory"
+  actions:
+  - name: "cleanup-disk"
+    image: "busybox:latest"
+    command: ["sh", "/scripts/cleanup-disk.sh"]
+    args: ["--threshold", "80"]
+    serviceAccount: "cleanup-service-account"  # Service account with cleanup permissions
+    volumeMounts:
+    - name: config-volume
+      mountPath: /scripts
+      readOnly: true
+    - name: temp-storage
+      mountPath: /tmp/work
+    - name: log-storage
+      mountPath: /var/log/alerts
+    env:
+    - name: ALERT_INSTANCE
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.instance"
+    - name: DISK_USAGE
+      valueFrom:
+        alertRef:
+          fieldPath: "annotations.disk_usage"
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "128Mi"
+      requests:
+        cpu: "100m"
+        memory: "64Mi"
+  - name: "system-info"
+    image: "alpine:latest"
+    command: ["sh", "-c"]
+    args: ["cat /host-proc/meminfo > /var/log/alerts/meminfo-$(date +%s).txt"]
+    serviceAccount: "system-info-service-account"  # Service account with system read permissions
+    volumeMounts:
+    - name: host-proc
+      mountPath: /host-proc
+      readOnly: true
+    - name: log-storage
+      mountPath: /var/log/alerts
+    env:
+    - name: HOSTNAME
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.instance"
+---
+# Service account for cleanup operations
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cleanup-service-account
+  namespace: default
+---
+# Service account for system information gathering
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: system-info-service-account
+  namespace: default
+---
+# Role for cleanup operations
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: cleanup-role
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]  # For disk cleanup operations
+---
+# Role for system information gathering
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: system-info-role
+rules:
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list"]  # For system information
+---
+# RoleBinding for cleanup service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cleanup-rolebinding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: cleanup-service-account
+  namespace: default
+roleRef:
+  kind: Role
+  name: cleanup-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# RoleBinding for system-info service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: system-info-rolebinding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: system-info-service-account
+  namespace: default
+roleRef:
+  kind: Role
+  name: system-info-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alert-scripts-config
+  namespace: default
+data:
+  cleanup-disk.sh: |
+    #!/bin/sh
+    echo "Starting disk cleanup for instance: $ALERT_INSTANCE"
+    echo "Disk usage threshold: $1 $2"
+    
+    # Simulate cleanup operations
+    echo "Cleaning temporary files..."
+    find /tmp/work -type f -name "*.tmp" -delete 2>/dev/null || true
+    
+    echo "Cleanup completed at $(date)"
+    echo "Disk cleanup completed for $ALERT_INSTANCE" >> /var/log/alerts/cleanup.log
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alert-logs-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
