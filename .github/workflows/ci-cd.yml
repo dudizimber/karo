@@ -233,7 +233,7 @@ jobs:
         run: |
           # Update deployment to use the built image
           IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
-          sed -i "s|alert-reaction-operator:latest|$IMAGE_TAG|g" config/manager/deployment.yaml
+          sed -i "s|docker.io/dudizimber/k8s-alert-reaction-operator:latest|$IMAGE_TAG|g" config/manager/deployment.yaml
           kubectl apply -f config/rbac/
           kubectl apply -f config/manager/
 
