@@ -109,7 +109,7 @@ func TestAlertReactionReconciler_Reconcile(t *testing.T) {
 		t.Logf("Reconcile succeeded")
 	}
 
-	if !result.Requeue {
+	if result.RequeueAfter == 0 {
 		t.Log("No requeue requested")
 	}
 
