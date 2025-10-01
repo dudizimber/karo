@@ -16,7 +16,7 @@ import (
 	alertreactionv1alpha1 "github.com/dudizimber/k8s-alert-reaction-operator/api/v1alpha1"
 )
 
-func setupTestEmpty() (*AlertReactionReconciler, client.Client, *runtime.Scheme) {
+func setupTestEmpty() (*AlertReactionReconciler, client.Client) {
 	s := runtime.NewScheme()
 	_ = scheme.AddToScheme(s)
 	_ = alertreactionv1alpha1.AddToScheme(s)
@@ -29,10 +29,10 @@ func setupTestEmpty() (*AlertReactionReconciler, client.Client, *runtime.Scheme)
 		Scheme: s,
 	}
 
-	return reconciler, fakeClient, s
+	return reconciler, fakeClient
 }
 
-func setupTestWithAlertReaction() (*AlertReactionReconciler, client.Client, *runtime.Scheme) {
+func setupTestWithAlertReaction() (*AlertReactionReconciler, client.Client) {
 	s := runtime.NewScheme()
 	_ = scheme.AddToScheme(s)
 	_ = alertreactionv1alpha1.AddToScheme(s)
@@ -66,11 +66,11 @@ func setupTestWithAlertReaction() (*AlertReactionReconciler, client.Client, *run
 		Scheme: s,
 	}
 
-	return reconciler, fakeClient, s
+	return reconciler, fakeClient
 }
 
 func TestAlertReactionReconciler_Reconcile(t *testing.T) {
-	reconciler, fakeClient, _ := setupTestWithAlertReaction()
+	reconciler, fakeClient := setupTestWithAlertReaction()
 
 	// The AlertReaction is already created in setupTest()
 	// Just verify it exists
@@ -126,7 +126,7 @@ func TestAlertReactionReconciler_Reconcile(t *testing.T) {
 }
 
 func TestAlertReactionReconciler_ProcessAlert(t *testing.T) {
-	reconciler, fakeClient, _ := setupTestEmpty()
+	reconciler, fakeClient := setupTestEmpty()
 
 	// Create an AlertReaction
 	alertReaction := &alertreactionv1alpha1.AlertReaction{
@@ -247,7 +247,7 @@ func TestAlertReactionReconciler_ProcessAlert(t *testing.T) {
 }
 
 func TestAlertReactionReconciler_ProcessAlertNoMatch(t *testing.T) {
-	reconciler, fakeClient, _ := setupTestEmpty()
+	reconciler, fakeClient := setupTestEmpty()
 
 	// Create an AlertReaction for a different alert
 	alertReaction := &alertreactionv1alpha1.AlertReaction{
@@ -298,7 +298,7 @@ func TestAlertReactionReconciler_ProcessAlertNoMatch(t *testing.T) {
 }
 
 func TestGetAlertFieldValue(t *testing.T) {
-	reconciler, _, _ := setupTestEmpty()
+	reconciler, _ := setupTestEmpty()
 
 	alertData := map[string]interface{}{
 		"status": "firing",
@@ -344,7 +344,7 @@ func TestGetAlertFieldValue(t *testing.T) {
 }
 
 func TestCreateJobFromAction(t *testing.T) {
-	reconciler, _, _ := setupTestEmpty()
+	reconciler, _ := setupTestEmpty()
 
 	alertReaction := &alertreactionv1alpha1.AlertReaction{
 		ObjectMeta: metav1.ObjectMeta{
@@ -451,7 +451,7 @@ func TestCreateJobFromAction(t *testing.T) {
 }
 
 func TestCreateJobFromActionWithVolumes(t *testing.T) {
-	reconciler, _, _ := setupTestEmpty()
+	reconciler, _ := setupTestEmpty()
 
 	alertReaction := &alertreactionv1alpha1.AlertReaction{
 		ObjectMeta: metav1.ObjectMeta{
@@ -581,7 +581,7 @@ func TestCreateJobFromActionWithVolumes(t *testing.T) {
 }
 
 func TestConvertVolumes(t *testing.T) {
-	reconciler, _, _ := setupTestEmpty()
+	reconciler, _ := setupTestEmpty()
 
 	volumes := []alertreactionv1alpha1.Volume{
 		{
@@ -641,7 +641,7 @@ func TestConvertVolumes(t *testing.T) {
 }
 
 func TestConvertVolumeMounts(t *testing.T) {
-	reconciler, _, _ := setupTestEmpty()
+	reconciler, _ := setupTestEmpty()
 
 	volumeMounts := []alertreactionv1alpha1.VolumeMount{
 		{
@@ -656,10 +656,7 @@ func TestConvertVolumeMounts(t *testing.T) {
 		},
 	}
 
-	k8sVolumeMounts, err := reconciler.convertVolumeMounts(volumeMounts)
-	if err != nil {
-		t.Fatalf("convertVolumeMounts failed: %v", err)
-	}
+	k8sVolumeMounts := reconciler.convertVolumeMounts(volumeMounts)
 
 	if len(k8sVolumeMounts) != 2 {
 		t.Errorf("Expected 2 volume mounts, got %d", len(k8sVolumeMounts))

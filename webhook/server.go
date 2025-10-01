@@ -69,8 +69,9 @@ func (ws *WebhookServer) Start(ctx context.Context) error {
 	router.POST("/webhook/:receiver", ws.handleWebhook)
 
 	server := &http.Server{
-		Addr:    ":" + ws.port,
-		Handler: router,
+		Addr:              ":" + ws.port,
+		Handler:           router,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	logger := log.FromContext(ctx)

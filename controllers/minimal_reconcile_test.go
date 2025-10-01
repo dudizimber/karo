@@ -11,7 +11,7 @@ import (
 )
 
 func TestMinimalReconcile(t *testing.T) {
-	reconciler, _, _ := setupTestWithAlertReaction()
+	reconciler, _ := setupTestWithAlertReaction()
 
 	req := ctrl.Request{
 		NamespacedName: types.NamespacedName{

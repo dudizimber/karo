@@ -180,10 +180,7 @@ func (r *AlertReactionReconciler) createJobFromAction(ctx context.Context, alert
 	}
 
 	// Convert volume mounts
-	volumeMounts, err := r.convertVolumeMounts(action.VolumeMounts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert volume mounts: %w", err)
-	}
+	volumeMounts := r.convertVolumeMounts(action.VolumeMounts)
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -413,7 +410,7 @@ func (r *AlertReactionReconciler) convertVolumes(volumes []alertreactionv1alpha1
 }
 
 // convertVolumeMounts converts AlertReaction volume mounts to Kubernetes volume mounts
-func (r *AlertReactionReconciler) convertVolumeMounts(volumeMounts []alertreactionv1alpha1.VolumeMount) ([]corev1.VolumeMount, error) {
+func (r *AlertReactionReconciler) convertVolumeMounts(volumeMounts []alertreactionv1alpha1.VolumeMount) []corev1.VolumeMount {
 	var result []corev1.VolumeMount
 
 	for _, vm := range volumeMounts {
@@ -426,7 +423,7 @@ func (r *AlertReactionReconciler) convertVolumeMounts(volumeMounts []alertreacti
 		result = append(result, k8sVM)
 	}
 
-	return result, nil
+	return result
 }
 
 // SetupWithManager sets up the controller with the Manager.

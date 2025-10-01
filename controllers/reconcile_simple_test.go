@@ -9,7 +9,7 @@ import (
 )
 
 func TestReconcileNonExistent(t *testing.T) {
-	reconciler, _, _ := setupTestEmpty()
+	reconciler, _ := setupTestEmpty()
 
 	// Try to reconcile a non-existent AlertReaction
 	req := ctrl.Request{

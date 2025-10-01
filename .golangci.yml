@@ -9,7 +9,6 @@ run:
 linters:
   enable:
     - errcheck     # Check for unchecked errors
-    - gosimple     # Simplify code
     - govet        # Go vet analysis
     - ineffassign  # Detect ineffectual assignments
     - staticcheck  # Static analysis

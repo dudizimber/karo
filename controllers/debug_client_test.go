@@ -10,7 +10,7 @@ import (
 )
 
 func TestReconcilerClientDebug(t *testing.T) {
-	reconciler, fakeClient, _ := setupTestWithAlertReaction()
+	reconciler, fakeClient := setupTestWithAlertReaction()
 
 	// Verify the AlertReaction exists using fakeClient
 	var ar1 alertreactionv1alpha1.AlertReaction

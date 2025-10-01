@@ -72,7 +72,7 @@ func TestWebhookServer_HandleWebhook_ValidPayload(t *testing.T) {
 		},
 	}
 
-	err := controller.Client.Create(context.TODO(), alertReaction)
+	err := controller.Create(context.TODO(), alertReaction)
 	if err != nil {
 		t.Fatalf("Failed to create AlertReaction: %v", err)
 	}

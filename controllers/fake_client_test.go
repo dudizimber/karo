@@ -11,7 +11,7 @@ import (
 )
 
 func TestFakeClientBasic(t *testing.T) {
-	reconciler, fakeClient, _ := setupTestEmpty()
+	reconciler, fakeClient := setupTestEmpty()
 
 	// Create a simple AlertReaction
 	alertReaction := &alertreactionv1alpha1.AlertReaction{
