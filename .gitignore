@@ -55,5 +55,6 @@ coverage.txt
 
 # Build artifacts
 manager
+!config/manager
 controller-gen
 kustomize
