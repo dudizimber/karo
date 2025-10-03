@@ -109,11 +109,11 @@ analyze_commits() {
     local breaking_changes feat_changes fix_changes
     
     if [[ "$from_tag" != "HEAD" ]]; then
-        breaking_changes=$(git log --pretty=format:"%s" ${from_tag}..HEAD | grep -c "^feat!\|^fix!\|BREAKING CHANGE" || true)
+        breaking_changes=$(git log --pretty=format:"%s" ${from_tag}..HEAD | grep -c -E "^feat!|^fix!|BREAKING CHANGE" || true)
         feat_changes=$(git log --pretty=format:"%s" ${from_tag}..HEAD | grep -c "^feat" || true)
         fix_changes=$(git log --pretty=format:"%s" ${from_tag}..HEAD | grep -c "^fix" || true)
     else
-        breaking_changes=$(git log --pretty=format:"%s" | grep -c "^feat!\|^fix!\|BREAKING CHANGE" || true)
+        breaking_changes=$(git log --pretty=format:"%s" | grep -c -E "^feat!|^fix!|BREAKING CHANGE" || true)
         feat_changes=$(git log --pretty=format:"%s" | grep -c "^feat" || true)
         fix_changes=$(git log --pretty=format:"%s" | grep -c "^fix" || true)
     fi
@@ -155,10 +155,18 @@ validate_changelog() {
     
     # Check if unreleased section has meaningful content
     local unreleased_content
-    unreleased_content=$(sed -n '/## \[Unreleased\]/,/## \[/p' "$changelog_file" | head -n -1 | tail -n +2)
+    # Extract content between [Unreleased] and the next ## section (or end of file)
+    unreleased_content=$(awk '/## \[Unreleased\]/{flag=1; next} /^## \[/{flag=0} flag' "$changelog_file" | grep -v '^[[:space:]]*$' | head -10)
     
-    if [[ -z "$unreleased_content" ]] || echo "$unreleased_content" | grep -q "- Prepare for next release"; then
-        print_warning "Unreleased section appears to be empty or has only placeholder content"
+    if [[ -z "$unreleased_content" ]]; then
+        print_warning "Unreleased section appears to be empty"
+        print_warning "Consider adding meaningful changes before releasing"
+        return 1
+    fi
+    
+    # Check if it only contains placeholder content
+    if echo "$unreleased_content" | grep -q -- "- Prepare for next release" && [[ $(echo "$unreleased_content" | wc -l) -eq 1 ]]; then
+        print_warning "Unreleased section has only placeholder content"
         print_warning "Consider adding meaningful changes before releasing"
         return 1
     fi
@@ -277,27 +285,44 @@ show_release_summary() {
     echo
 }
 
-# Function to trigger draft release
-trigger_draft_release() {
+# Function to create release branch
+create_release_branch() {
     local version=$1
     local prerelease=${2:-false}
     
-    if ! command -v gh >/dev/null 2>&1; then
-        print_error "GitHub CLI (gh) is required to trigger draft releases"
-        print_error "Install it from: https://cli.github.com/"
+    local branch_name="release/${version}"
+    
+    print_status "Creating release branch: $branch_name"
+    
+    # Check if branch already exists
+    if git branch -r | grep -q "origin/$branch_name"; then
+        print_error "Release branch $branch_name already exists on remote"
         return 1
     fi
     
-    print_status "Triggering draft release workflow..."
+    if git branch | grep -q "$branch_name"; then
+        print_error "Release branch $branch_name already exists locally"
+        return 1
+    fi
     
-    if gh workflow run draft-release.yml \
-        -f version="$version" \
-        -f prerelease="$prerelease"; then
-        print_status "✅ Draft release workflow triggered successfully"
-        print_status "Monitor progress at: https://github.com/$(gh repo view --json owner,name --jq '.owner.login + "/" + .name')/actions"
-        return 0
+    # Create and switch to release branch
+    if git checkout -b "$branch_name"; then
+        print_status "✅ Created release branch: $branch_name"
+        
+        # Push the branch to trigger the workflow
+        if git push -u origin "$branch_name"; then
+            print_status "✅ Pushed release branch to remote"
+            print_status "The draft release workflow will be triggered automatically"
+            print_status "Monitor progress at: https://github.com/$(git remote get-url origin | sed 's/.*github.com[:/]\([^/]*\/[^/]*\)\.git/\1/' | sed 's/.*github.com[:/]\([^/]*\/[^/]*\)/\1/')/actions"
+            return 0
+        else
+            print_error "❌ Failed to push release branch"
+            git checkout main
+            git branch -D "$branch_name"
+            return 1
+        fi
     else
-        print_error "❌ Failed to trigger draft release workflow"
+        print_error "❌ Failed to create release branch"
         return 1
     fi
 }
@@ -306,14 +331,14 @@ trigger_draft_release() {
 show_usage() {
     echo "Usage: $0 [OPTIONS] [VERSION]"
     echo
-    echo "Prepare and trigger release workflows for the Alert Reaction Operator."
+    echo "Create release branches and trigger release workflows for the Alert Reaction Operator."
     echo
     echo "OPTIONS:"
     echo "  -h, --help          Show this help message"
     echo "  -c, --check         Run pre-release checks only"
     echo "  -s, --suggest       Suggest next version based on commits"
     echo "  -p, --prerelease    Mark as pre-release"
-    echo "  -d, --dry-run       Show what would be done without triggering release"
+    echo "  -d, --dry-run       Show what would be done without creating release branch"
     echo "  -f, --force         Skip pre-release checks"
     echo
     echo "VERSION:"
@@ -323,8 +348,8 @@ show_usage() {
     echo "Examples:"
     echo "  $0 --check                    # Run pre-release checks"
     echo "  $0 --suggest                  # Suggest next version"
-    echo "  $0 v1.0.0                     # Prepare release v1.0.0"
-    echo "  $0 v1.0.0-alpha.1 --prerelease # Prepare pre-release"
+    echo "  $0 v1.0.0                     # Create release/v1.0.0 branch"
+    echo "  $0 v1.0.0-alpha.1 --prerelease # Create pre-release branch"
     echo "  $0 --dry-run v1.0.0           # Show what would be done"
 }
 
@@ -438,15 +463,16 @@ main() {
     fi
     
     if [[ "$dry_run" == true ]]; then
-        print_status "DRY RUN: Would trigger draft release workflow with:"
+        print_status "DRY RUN: Would create release branch with:"
         echo "  Version: $version"
+        echo "  Branch: release/$version"
         echo "  Pre-release: $prerelease"
         exit 0
     fi
     
-    # Confirm before triggering
+    # Confirm before creating release branch
     echo
-    print_warning "This will trigger a draft release workflow for version $version"
+    print_warning "This will create release branch 'release/$version' and trigger the draft release workflow"
     if [[ "$prerelease" == true ]]; then
         print_warning "This will be marked as a pre-release"
     fi
@@ -457,16 +483,20 @@ main() {
         exit 0
     fi
     
-    # Trigger draft release
-    if trigger_draft_release "$version" "$prerelease"; then
-        print_status "🎉 Draft release preparation initiated!"
+    # Create release branch
+    if create_release_branch "$version" "$prerelease"; then
+        print_status "🎉 Release branch created and workflow initiated!"
         echo
         print_status "Next steps:"
-        echo "1. Monitor the workflow progress in GitHub Actions"
-        echo "2. Review the draft release when ready"
-        echo "3. Publish the release to trigger Helm chart automation"
+        echo "1. The draft release workflow is running automatically"
+        echo "2. Monitor the workflow progress in GitHub Actions"
+        echo "3. Make any final changes to the release branch if needed"
+        echo "4. Review the draft release when ready"
+        echo "5. Publish the release to trigger Helm chart automation"
+        echo
+        print_status "Current branch: $(git branch --show-current)"
     else
-        print_error "Failed to trigger draft release"
+        print_error "Failed to create release branch"
         exit 1
     fi
 }

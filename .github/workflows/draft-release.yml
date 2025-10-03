@@ -2,7 +2,10 @@ name: Draft Release
 
 on:
   push:
-    branches: [main]
+    branches: 
+      - 'release/**'
+      - 'release/*'
+  create:
   workflow_dispatch:
     inputs:
       version:
@@ -58,9 +61,35 @@ jobs:
               exit 1
             fi
             PRERELEASE="${{ inputs.prerelease }}"
+          elif [[ "${{ github.ref_name }}" =~ ^release/ ]]; then
+            # Release branch trigger - extract version from branch name
+            BRANCH_NAME="${{ github.ref_name }}"
+            echo "Release branch detected: $BRANCH_NAME"
+            
+            # Extract version from branch name (release/v1.0.0 or release/1.0.0)
+            if [[ $BRANCH_NAME =~ ^release/v?([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?)$ ]]; then
+              VERSION_NUMBER="${BASH_REMATCH[1]}"
+              VERSION="v${VERSION_NUMBER}"
+              
+              # Check if it's a prerelease based on version suffix
+              if [[ $VERSION =~ -[a-zA-Z] ]]; then
+                PRERELEASE=true
+              else
+                PRERELEASE=false
+              fi
+            else
+              echo "Invalid release branch format: $BRANCH_NAME"
+              echo "Expected format: release/v1.0.0 or release/1.0.0"
+              exit 1
+            fi
+          elif [[ "${{ github.event_name }}" == "create" ]]; then
+            # Branch creation event - extract version but don't create release yet
+            BRANCH_NAME="${{ github.ref_name }}"
+            echo "New release branch created: $BRANCH_NAME"
+            echo "Waiting for commits to be pushed to this branch before creating draft release"
+            exit 0
           else
-            # Automatic trigger - generate next version
-            # Get latest tag
+            # Fallback - generate next version
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
             echo "Latest tag: $LATEST_TAG"
             
@@ -115,15 +144,15 @@ jobs:
           cp CHANGELOG.md CHANGELOG.md.backup
           
           # Create temporary changelog for this release
-          cat > release_changelog.md << EOF
+          cat > release_changelog.md << 'CHANGELOG_EOF'
           # Release Notes for $VERSION
           
           Released on $TODAY
           
-          EOF
+          CHANGELOG_EOF
           
           # Extract unreleased section from CHANGELOG
-          if grep -q "## \[Unreleased\]" CHANGELOG.md; then
+          if grep "\#\# \[Unreleased\]" CHANGELOG.md; then
             # Get content between [Unreleased] and next version
             sed -n '/## \[Unreleased\]/,/## \[/p' CHANGELOG.md | head -n -1 | tail -n +2 >> release_changelog.md
           fi
@@ -154,7 +183,7 @@ jobs:
           fi
           
           # Update main CHANGELOG.md with new version
-          if grep -q "## \[Unreleased\]" CHANGELOG.md; then
+          if grep "\#\# \[Unreleased\]" CHANGELOG.md; then
             # Replace [Unreleased] with version and add new [Unreleased] section
             sed -i "s/## \[Unreleased\]/## \[Unreleased\]\n\n### Added\n- Prepare for next release\n\n## \[${VERSION#v}\] - $TODAY/" CHANGELOG.md
             
@@ -169,9 +198,9 @@ jobs:
           fi
           
           # Set output
-          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "CHANGELOG<<CHANGELOG_DELIMITER" >> $GITHUB_OUTPUT
           cat release_changelog.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "CHANGELOG_DELIMITER" >> $GITHUB_OUTPUT
 
       - name: Validate version doesn't exist
         run: |
@@ -239,7 +268,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit CHANGELOG updates
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && startsWith(github.ref_name, 'release/')
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           

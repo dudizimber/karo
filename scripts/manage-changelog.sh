@@ -77,7 +77,7 @@ add_entry() {
     fi
     
     # Check if unreleased section exists
-    if ! grep -q "## \[Unreleased\]" "$CHANGELOG_FILE"; then
+    if ! grep "\#\# \[Unreleased\]" "$CHANGELOG_FILE"; then
         print_error "No [Unreleased] section found in CHANGELOG.md"
         return 1
     fi
@@ -142,7 +142,7 @@ release_version() {
     fi
     
     # Check if version already exists
-    if grep -q "## \[${version}\]" "$CHANGELOG_FILE"; then
+    if grep "\#\# \[${version}\]" "$CHANGELOG_FILE"; then
         print_error "Version $version already exists in CHANGELOG"
         return 1
     fi
@@ -210,7 +210,7 @@ show_unreleased() {
         return 1
     fi
     
-    if ! grep -q "## \[Unreleased\]" "$CHANGELOG_FILE"; then
+    if ! grep "\#\# \[Unreleased\]" "$CHANGELOG_FILE"; then
         print_error "No [Unreleased] section found"
         return 1
     fi
@@ -231,7 +231,7 @@ show_version() {
     # Remove 'v' prefix if present
     version=${version#v}
     
-    if ! grep -q "## \[${version}\]" "$CHANGELOG_FILE"; then
+    if ! grep "\#\# \[${version}\]" "$CHANGELOG_FILE"; then
         print_error "Version $version not found in CHANGELOG"
         return 1
     fi
@@ -268,7 +268,7 @@ validate_changelog() {
     fi
     
     # Check for [Unreleased] section
-    if ! grep -q "## \[Unreleased\]" "$CHANGELOG_FILE"; then
+    if ! grep "\#\# \[Unreleased\]" "$CHANGELOG_FILE"; then
         print_error "Missing [Unreleased] section"
         ((issues++))
     fi
@@ -304,7 +304,7 @@ generate_release_notes() {
     # Remove 'v' prefix if present
     version=${version#v}
     
-    if ! grep -q "## \[${version}\]" "$CHANGELOG_FILE"; then
+    if ! grep "\#\# \[${version}\]" "$CHANGELOG_FILE"; then
         print_error "Version $version not found in CHANGELOG"
         return 1
     fi
