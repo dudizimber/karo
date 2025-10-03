@@ -34,9 +34,9 @@ print_header() {
 # Function to validate version format
 validate_version() {
     local version=$1
-    if [[ ! $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+    if [[ ! $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
         print_error "Invalid version format: $version"
-        print_error "Expected format: vX.Y.Z or vX.Y.Z-suffix (e.g., v1.0.0, v1.0.0-alpha.1)"
+        print_error "Expected format: vX.Y.Z, vX.Y.Z-prerelease, or vX.Y.Z+build (e.g., v1.0.0, v1.0.0-alpha.1, v1.0.0+build.1)"
         return 1
     fi
     return 0
@@ -342,7 +342,8 @@ show_usage() {
     echo "  -f, --force         Skip pre-release checks"
     echo
     echo "VERSION:"
-    echo "  Semantic version with 'v' prefix (e.g., v1.0.0, v1.2.3-alpha.1)"
+    echo "  Semantic version with 'v' prefix (e.g., v1.0.0, v1.2.3-alpha.1, v1.0.0+build.1)"
+    echo "  Supports pre-release identifiers (-alpha, -beta, -rc) and build metadata (+build)"
     echo "  If not provided, will suggest next version"
     echo
     echo "Examples:"
@@ -350,6 +351,7 @@ show_usage() {
     echo "  $0 --suggest                  # Suggest next version"
     echo "  $0 v1.0.0                     # Create release/v1.0.0 branch"
     echo "  $0 v1.0.0-alpha.1 --prerelease # Create pre-release branch"
+    echo "  $0 v1.0.0+build.1             # Create release with build metadata"
     echo "  $0 --dry-run v1.0.0           # Show what would be done"
 }
 

@@ -55,9 +55,9 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             # Manual trigger - use provided version
             VERSION="${{ inputs.version }}"
-            if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
               echo "Invalid version format: $VERSION"
-              echo "Expected format: vX.Y.Z or vX.Y.Z-suffix"
+              echo "Expected format: vX.Y.Z, vX.Y.Z-prerelease, or vX.Y.Z+build"
               exit 1
             fi
             PRERELEASE="${{ inputs.prerelease }}"
@@ -67,11 +67,16 @@ jobs:
             echo "Release branch detected: $BRANCH_NAME"
             
             # Extract version from branch name (release/v1.0.0 or release/1.0.0)
-            if [[ $BRANCH_NAME =~ ^release/v?([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?)$ ]]; then
+            # Support semantic versioning with pre-release and build metadata: v1.0.0-alpha.1+build.1
+            if [[ $BRANCH_NAME =~ ^release/v?([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?)$ ]]; then
               VERSION_NUMBER="${BASH_REMATCH[1]}"
-              VERSION="v${VERSION_NUMBER}"
+              PRERELEASE_PART="${BASH_REMATCH[2]}"
+              BUILD_PART="${BASH_REMATCH[3]}"
               
-              # Check if it's a prerelease based on version suffix
+              # Construct full version with build metadata if present
+              VERSION="v${VERSION_NUMBER}${PRERELEASE_PART}${BUILD_PART}"
+              
+              # Check if it's a prerelease based on version suffix (has dash followed by letter)
               if [[ $VERSION =~ -[a-zA-Z] ]]; then
                 PRERELEASE=true
               else
@@ -79,7 +84,7 @@ jobs:
               fi
             else
               echo "Invalid release branch format: $BRANCH_NAME"
-              echo "Expected format: release/v1.0.0 or release/1.0.0"
+              echo "Expected format: release/v1.0.0, release/1.0.0, release/v1.0.0-alpha.1, or release/v1.0.0+build.1"
               exit 1
             fi
           elif [[ "${{ github.event_name }}" == "create" ]]; then
