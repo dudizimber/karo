@@ -211,51 +211,34 @@ spec:
                   If no matchers are specified, only the AlertName is used for matching
                 items:
                   description: AlertMatcher defines conditions for matching alerts
-                    based on their attributes
+                    using Prometheus-style operators
                   properties:
                     name:
-                      description: Name of the alert attribute to match against (e.g.,
-                        "labels.instance", "annotations.severity", "status")
+                      description: |-
+                        Name of the label or annotation to match against (e.g., "severity", "instance", "service")
+                        For labels, this matches against alert labels directly
+                        For annotations, prefix with "annotations." (e.g., "annotations.runbook")
                       type: string
                     operator:
                       allOf:
                       - enum:
-                        - Equal
-                        - NotEqual
-                        - In
-                        - NotIn
-                        - Exists
-                        - DoesNotExist
-                        - GreaterThan
-                        - LessThan
-                        - Regex
-                        - NotRegex
-                      - enum:
-                        - Equal
-                        - NotEqual
-                        - In
-                        - NotIn
-                        - Exists
-                        - DoesNotExist
-                        - GreaterThan
-                        - LessThan
-                        - Regex
-                        - NotRegex
+                        - =
+                        - '!='
+                        - =~
+                        - '!~'
                       description: |-
-                        Operator defines how to compare the alert attribute value with the expected value
-                        Supported operators: Equal, NotEqual, In, NotIn, Exists, DoesNotExist, GreaterThan, LessThan, Regex, NotRegex
+                        Operator defines the Prometheus-style matching operator
+                        "=" for equality, "!=" for inequality, "=~" for regex match, "!~" for negative regex match
                       type: string
-                    values:
+                    value:
                       description: |-
-                        Values are the expected values to match against (not required for Exists/DoesNotExist operators)
-                        For "In" and "NotIn" operators, multiple values can be specified
-                        For other operators, only the first value is used
-                      items:
-                        type: string
-                      type: array
+                        Value is the value to match against
+                        For regex operators (=~ and !~), this should be a valid regular expression
+                      type: string
                   required:
                   - name
                   - operator
+                  - value
                   type: object
                 type: array
               volumes:

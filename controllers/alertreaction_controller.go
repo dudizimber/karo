@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -78,68 +79,161 @@ func (r *AlertReactionReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{}, nil
 }
 
-// ProcessAlert creates jobs for the given alert
+// ProcessAlert creates jobs for all matching AlertReactions for the given alert
 func (r *AlertReactionReconciler) ProcessAlert(ctx context.Context, alertName string, alertData map[string]interface{}) error {
 	logger := log.FromContext(ctx)
 
-	// Find AlertReaction for this alert
+	// Find all AlertReactions that match this alert
 	var alertReactionList alertreactionv1alpha1.AlertReactionList
 	if err := r.List(ctx, &alertReactionList); err != nil {
 		return fmt.Errorf("failed to list AlertReactions: %w", err)
 	}
 
-	var targetAlertReaction *alertreactionv1alpha1.AlertReaction
+	// Find all matching AlertReactions
+	var matchingAlertReactions []*alertreactionv1alpha1.AlertReaction
 	for i := range alertReactionList.Items {
-		if alertReactionList.Items[i].Spec.AlertName == alertName {
-			targetAlertReaction = &alertReactionList.Items[i]
-			break
+		alertReaction := &alertReactionList.Items[i]
+		if r.alertMatches(alertReaction, alertName, alertData) {
+			matchingAlertReactions = append(matchingAlertReactions, alertReaction)
 		}
 	}
 
-	if targetAlertReaction == nil {
+	if len(matchingAlertReactions) == 0 {
 		logger.Info("No AlertReaction found for alert", "alertName", alertName)
 		return nil
 	}
 
-	logger.Info("Processing alert", "alertName", alertName, "actionsCount", len(targetAlertReaction.Spec.Actions))
+	logger.Info("Processing alert", "alertName", alertName, "matchingAlertReactions", len(matchingAlertReactions))
 
-	var jobRefs []alertreactionv1alpha1.JobReference
 	now := metav1.NewTime(time.Now())
 
-	// Create a job for each action
-	for _, action := range targetAlertReaction.Spec.Actions {
-		job, err := r.createJobFromAction(ctx, targetAlertReaction, action, alertData)
-		if err != nil {
-			logger.Error(err, "failed to create job for action", "actionName", action.Name)
-			continue
+	// Process each matching AlertReaction
+	for _, targetAlertReaction := range matchingAlertReactions {
+		logger.Info("Processing AlertReaction", "name", targetAlertReaction.Name, "actionsCount", len(targetAlertReaction.Spec.Actions))
+
+		var jobRefs []alertreactionv1alpha1.JobReference
+
+		// Create a job for each action
+		for _, action := range targetAlertReaction.Spec.Actions {
+			job, err := r.createJobFromAction(ctx, targetAlertReaction, action, alertData)
+			if err != nil {
+				logger.Error(err, "failed to create job for action", "actionName", action.Name, "alertReaction", targetAlertReaction.Name)
+				continue
+			}
+
+			if err := r.Create(ctx, job); err != nil {
+				logger.Error(err, "failed to create job", "jobName", job.Name, "alertReaction", targetAlertReaction.Name)
+				continue
+			}
+
+			logger.Info("Created job for action", "jobName", job.Name, "actionName", action.Name, "alertReaction", targetAlertReaction.Name)
+
+			jobRefs = append(jobRefs, alertreactionv1alpha1.JobReference{
+				Name:       job.Name,
+				Namespace:  job.Namespace,
+				ActionName: action.Name,
+				CreatedAt:  now,
+			})
 		}
 
-		if err := r.Create(ctx, job); err != nil {
-			logger.Error(err, "failed to create job", "jobName", job.Name)
+		// Update AlertReaction status
+		targetAlertReaction.Status.LastTriggered = &now
+		targetAlertReaction.Status.TriggerCount++
+		targetAlertReaction.Status.LastJobsCreated = jobRefs
+
+		if err := r.Status().Update(ctx, targetAlertReaction); err != nil {
+			logger.Error(err, "failed to update AlertReaction status", "alertReaction", targetAlertReaction.Name)
+			// Continue processing other AlertReactions even if one fails
 			continue
 		}
-
-		logger.Info("Created job for action", "jobName", job.Name, "actionName", action.Name)
-
-		jobRefs = append(jobRefs, alertreactionv1alpha1.JobReference{
-			Name:       job.Name,
-			Namespace:  job.Namespace,
-			ActionName: action.Name,
-			CreatedAt:  now,
-		})
-	}
-
-	// Update AlertReaction status
-	targetAlertReaction.Status.LastTriggered = &now
-	targetAlertReaction.Status.TriggerCount++
-	targetAlertReaction.Status.LastJobsCreated = jobRefs
-
-	if err := r.Status().Update(ctx, targetAlertReaction); err != nil {
-		logger.Error(err, "failed to update AlertReaction status")
-		return err
 	}
 
 	return nil
+}
+
+// alertMatches checks if an AlertReaction matches the given alert based on alertName and matchers
+func (r *AlertReactionReconciler) alertMatches(alertReaction *alertreactionv1alpha1.AlertReaction, alertName string, alertData map[string]interface{}) bool {
+	// First check alertName match
+	if alertReaction.Spec.AlertName != alertName {
+		return false
+	}
+
+	// If no matchers are specified, the AlertReaction matches (backward compatibility)
+	if len(alertReaction.Spec.Matchers) == 0 {
+		return true
+	}
+
+	// All matchers must match for the AlertReaction to be triggered
+	for _, matcher := range alertReaction.Spec.Matchers {
+		if !r.evaluateMatcher(matcher, alertData) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// evaluateMatcher evaluates a single matcher against alert data
+func (r *AlertReactionReconciler) evaluateMatcher(matcher alertreactionv1alpha1.AlertMatcher, alertData map[string]interface{}) bool {
+	// Get the value from alert data
+	actualValue, err := r.getMatcherValue(matcher.Name, alertData)
+	if err != nil {
+		// If we can't get the value, the matcher fails
+		return false
+	}
+
+	// Evaluate based on operator
+	switch matcher.Operator {
+	case alertreactionv1alpha1.MatchOperatorEqual:
+		return actualValue == matcher.Value
+	case alertreactionv1alpha1.MatchOperatorNotEqual:
+		return actualValue != matcher.Value
+	case alertreactionv1alpha1.MatchOperatorRegexMatch:
+		return r.regexMatch(actualValue, matcher.Value)
+	case alertreactionv1alpha1.MatchOperatorRegexNotMatch:
+		return !r.regexMatch(actualValue, matcher.Value)
+	default:
+		// Unknown operator
+		return false
+	}
+}
+
+// getMatcherValue retrieves the value for a matcher from alert data
+func (r *AlertReactionReconciler) getMatcherValue(name string, alertData map[string]interface{}) (string, error) {
+	// Handle annotations with prefix
+	if strings.HasPrefix(name, "annotations.") {
+		annotationKey := strings.TrimPrefix(name, "annotations.")
+		if annotations, ok := alertData["annotations"].(map[string]interface{}); ok {
+			if value, exists := annotations[annotationKey]; exists {
+				return fmt.Sprintf("%v", value), nil
+			}
+		}
+		return "", fmt.Errorf("annotation %s not found", annotationKey)
+	}
+
+	// Handle labels directly
+	if labels, ok := alertData["labels"].(map[string]interface{}); ok {
+		if value, exists := labels[name]; exists {
+			return fmt.Sprintf("%v", value), nil
+		}
+	}
+
+	// Handle other top-level fields
+	if value, exists := alertData[name]; exists {
+		return fmt.Sprintf("%v", value), nil
+	}
+
+	return "", fmt.Errorf("field %s not found", name)
+}
+
+// regexMatch performs regular expression matching
+func (r *AlertReactionReconciler) regexMatch(value, pattern string) bool {
+	matched, err := regexp.MatchString(pattern, value)
+	if err != nil {
+		// Invalid regex pattern, return false
+		return false
+	}
+	return matched
 }
 
 func (r *AlertReactionReconciler) createJobFromAction(ctx context.Context, alertReaction *alertreactionv1alpha1.AlertReaction, action alertreactionv1alpha1.Action, alertData map[string]interface{}) (*batchv1.Job, error) {

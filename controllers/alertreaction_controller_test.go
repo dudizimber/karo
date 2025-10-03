@@ -22,7 +22,7 @@ func setupTestEmpty() (*AlertReactionReconciler, client.Client) {
 	_ = alertreactionv1alpha1.AddToScheme(s)
 	_ = batchv1.AddToScheme(s)
 
-	fakeClient := fake.NewClientBuilder().WithScheme(s).Build()
+	fakeClient := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(&alertreactionv1alpha1.AlertReaction{}).Build()
 
 	reconciler := &AlertReactionReconciler{
 		Client: fakeClient,
@@ -59,6 +59,7 @@ func setupTestWithAlertReaction() (*AlertReactionReconciler, client.Client) {
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(s).
 		WithObjects(alertReaction).
+		WithStatusSubresource(&alertreactionv1alpha1.AlertReaction{}).
 		Build()
 
 	reconciler := &AlertReactionReconciler{

@@ -30,49 +30,39 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	return nil
 }
 
-// AlertMatcher defines conditions for matching alerts based on their attributes
+// AlertMatcher defines conditions for matching alerts using Prometheus-style operators
 type AlertMatcher struct {
-	// Name of the alert attribute to match against (e.g., "labels.instance", "annotations.severity", "status")
+	// Name of the label or annotation to match against (e.g., "severity", "instance", "service")
+	// For labels, this matches against alert labels directly
+	// For annotations, prefix with "annotations." (e.g., "annotations.runbook")
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
 
-	// Operator defines how to compare the alert attribute value with the expected value
-	// Supported operators: Equal, NotEqual, In, NotIn, Exists, DoesNotExist, GreaterThan, LessThan, Regex, NotRegex
+	// Operator defines the Prometheus-style matching operator
+	// "=" for equality, "!=" for inequality, "=~" for regex match, "!~" for negative regex match
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=Equal;NotEqual;In;NotIn;Exists;DoesNotExist;GreaterThan;LessThan;Regex;NotRegex
+	// +kubebuilder:validation:Enum="=";"!=";"=~";"!~"
 	Operator MatchOperator `json:"operator"`
 
-	// Values are the expected values to match against (not required for Exists/DoesNotExist operators)
-	// For "In" and "NotIn" operators, multiple values can be specified
-	// For other operators, only the first value is used
-	Values []string `json:"values,omitempty"`
+	// Value is the value to match against
+	// For regex operators (=~ and !~), this should be a valid regular expression
+	// +kubebuilder:validation:Required
+	Value string `json:"value"`
 }
 
-// MatchOperator defines the type of matching operation to perform
-// +kubebuilder:validation:Enum=Equal;NotEqual;In;NotIn;Exists;DoesNotExist;GreaterThan;LessThan;Regex;NotRegex
+// MatchOperator defines Prometheus-style matching operators
+// +kubebuilder:validation:Enum="=";"!=";"=~";"!~"
 type MatchOperator string
 
 const (
-	// MatchOperatorEqual checks if the alert attribute equals the specified value
-	MatchOperatorEqual MatchOperator = "Equal"
-	// MatchOperatorNotEqual checks if the alert attribute does not equal the specified value
-	MatchOperatorNotEqual MatchOperator = "NotEqual"
-	// MatchOperatorIn checks if the alert attribute value is in the list of specified values
-	MatchOperatorIn MatchOperator = "In"
-	// MatchOperatorNotIn checks if the alert attribute value is not in the list of specified values
-	MatchOperatorNotIn MatchOperator = "NotIn"
-	// MatchOperatorExists checks if the alert attribute exists (regardless of value)
-	MatchOperatorExists MatchOperator = "Exists"
-	// MatchOperatorDoesNotExist checks if the alert attribute does not exist
-	MatchOperatorDoesNotExist MatchOperator = "DoesNotExist"
-	// MatchOperatorGreaterThan checks if the alert attribute value is greater than the specified value (numeric comparison)
-	MatchOperatorGreaterThan MatchOperator = "GreaterThan"
-	// MatchOperatorLessThan checks if the alert attribute value is less than the specified value (numeric comparison)
-	MatchOperatorLessThan MatchOperator = "LessThan"
-	// MatchOperatorRegex checks if the alert attribute value matches the specified regular expression
-	MatchOperatorRegex MatchOperator = "Regex"
-	// MatchOperatorNotRegex checks if the alert attribute value does not match the specified regular expression
-	MatchOperatorNotRegex MatchOperator = "NotRegex"
+	// MatchOperatorEqual ("=") checks if the label/annotation equals the specified value
+	MatchOperatorEqual MatchOperator = "="
+	// MatchOperatorNotEqual ("!=") checks if the label/annotation does not equal the specified value
+	MatchOperatorNotEqual MatchOperator = "!="
+	// MatchOperatorRegexMatch ("=~") checks if the label/annotation matches the specified regular expression
+	MatchOperatorRegexMatch MatchOperator = "=~"
+	// MatchOperatorRegexNotMatch ("!~") checks if the label/annotation does not match the specified regular expression
+	MatchOperatorRegexNotMatch MatchOperator = "!~"
 )
 
 // AlertReactionSpec defines the desired state of AlertReaction

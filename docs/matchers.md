@@ -1,6 +1,6 @@
 # AlertReaction Matchers
 
-AlertReaction now supports advanced matching conditions through the `matchers` field. This allows you to specify fine-grained conditions for triggering reactions based on alert attributes beyond just the alert name.
+AlertReaction supports advanced matching conditions using Prometheus-style operators through the `matchers` field. This allows you to specify fine-grained conditions for triggering reactions based on alert labels and annotations, just like Prometheus silences.
 
 ## Matcher Configuration
 
@@ -10,93 +10,85 @@ Matchers are defined as an array of conditions that must **all** be satisfied fo
 spec:
   alertName: "ServiceDown"
   matchers:
-    - name: "labels.severity"
-      operator: Equal
-      values: ["critical"]
-    - name: "labels.service"
-      operator: In
-      values: ["web-server", "api-gateway"]
+    - name: severity
+      operator: "="
+      value: critical
+    - name: service
+      operator: "=~"
+      value: "web-server|api-gateway"
 ```
 
 ## Matcher Fields
 
 ### `name` (required)
-The path to the alert attribute to match against. Common paths include:
-- `labels.<label-name>` - Match against alert labels
-- `annotations.<annotation-name>` - Match against alert annotations  
-- `status` - Match against alert status
-- `startsAt` - Match against alert start time
-- `endsAt` - Match against alert end time
+The name of the alert label or annotation to match against:
+- For labels: Use the label name directly (e.g., `severity`, `instance`, `service`)
+- For annotations: Prefix with `annotations.` (e.g., `annotations.runbook`, `annotations.summary`)
 
 ### `operator` (required)
-The comparison operator to use. Supported operators:
+Prometheus-style matching operators:
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `Equal` | Exact string match | `value == "critical"` |
-| `NotEqual` | String not equal | `value != "warning"` |
-| `In` | Value in list | `value in ["critical", "high"]` |
-| `NotIn` | Value not in list | `value not in ["low", "info"]` |
-| `Exists` | Attribute exists | Label/annotation is present |
-| `DoesNotExist` | Attribute missing | Label/annotation is not present |
-| `GreaterThan` | Numeric comparison | `value > "90"` |
-| `LessThan` | Numeric comparison | `value < "10"` |
-| `Regex` | Regular expression | `value matches ".*prod.*"` |
-| `NotRegex` | Negative regex | `value does not match ".*test.*"` |
+| Operator | Description | Example Usage |
+|----------|-------------|---------------|
+| `=` | Exact equality match | `severity = "critical"` |
+| `!=` | Not equal match | `environment != "test"` |
+| `=~` | Regular expression match | `instance =~ "prod-.*"` |
+| `!~` | Negative regular expression match | `service !~ ".*test.*"` |
 
-### `values` (optional)
-Array of values to match against. Not required for `Exists` and `DoesNotExist` operators.
-- For `In` and `NotIn`: Multiple values are supported
-- For other operators: Only the first value is used
-- For numeric operators: Values are converted to numbers for comparison
+### `value` (required)
+The value to match against:
+- For `=` and `!=`: Exact string value
+- For `=~` and `!~`: Valid regular expression pattern
 
 ## Examples
 
 ### Basic Label Matching
 ```yaml
 matchers:
-  - name: "labels.severity"
-    operator: Equal
-    values: ["critical"]
+  - name: severity
+    operator: "="
+    value: critical
 ```
 
-### Multiple Service Matching
+### Environment Exclusion
 ```yaml
 matchers:
-  - name: "labels.service"
-    operator: In
-    values: ["web-server", "api-gateway", "database"]
+  - name: environment
+    operator: "!="
+    value: test
 ```
 
-### Existence Check
+### Multiple Services with Regex
 ```yaml
 matchers:
-  - name: "labels.instance"
-    operator: Exists
-  - name: "annotations.runbook"
-    operator: DoesNotExist
+  - name: service
+    operator: "=~"
+    value: "web-server|api-gateway|database"
 ```
 
-### Numeric Thresholds
+### Instance Pattern Matching
 ```yaml
 matchers:
-  - name: "annotations.value"
-    operator: GreaterThan
-    values: ["90"]
+  - name: instance
+    operator: "=~"
+    value: "prod-.*-[0-9]+"
+  - name: environment
+    operator: "!~"
+    value: ".*test.*|.*staging.*"
 ```
 
-### Regular Expression Matching
+### Annotation Matching
 ```yaml
 matchers:
-  - name: "labels.instance"
-    operator: Regex
-    values: ["prod-.*-[0-9]+"]
-  - name: "labels.environment"
-    operator: NotRegex
-    values: [".*test.*", ".*staging.*"]
+  - name: annotations.runbook
+    operator: "=~"
+    value: ".*emergency.*"
+  - name: annotations.severity
+    operator: "="
+    value: critical
 ```
 
-### Complex Example
+### Complex Real-World Example
 ```yaml
 apiVersion: alerts.davidzimberknopf.io/v1alpha1
 kind: AlertReaction
@@ -106,28 +98,29 @@ spec:
   alertName: "ServiceDown"
   matchers:
     # Must be critical severity
-    - name: "labels.severity"
-      operator: Equal
-      values: ["critical"]
+    - name: severity
+      operator: "="
+      value: critical
     
     # Must be production environment
-    - name: "labels.environment"
-      operator: Equal
-      values: ["production"]
+    - name: environment
+      operator: "="
+      value: production
     
     # Must be one of our core services
-    - name: "labels.service"
-      operator: In
-      values: ["web-server", "api-gateway", "database", "cache"]
+    - name: service
+      operator: "=~"
+      value: "web-server|api-gateway|database|cache"
     
-    # Must have a runbook
-    - name: "annotations.runbook"
-      operator: Exists
+    # Must have emergency runbook
+    - name: annotations.runbook
+      operator: "=~"
+      value: ".*emergency.*"
     
     # Exclude test instances
-    - name: "labels.instance"
-      operator: NotRegex
-      values: [".*test.*", ".*dev.*"]
+    - name: instance
+      operator: "!~"
+      value: ".*test.*|.*dev.*"
   
   actions:
     - name: "emergency-response"
@@ -135,20 +128,32 @@ spec:
       # ... action configuration
 ```
 
+## Prometheus Compatibility
+
+The matcher syntax is designed to be familiar to Prometheus users:
+
+| Prometheus Silence | AlertReaction Matcher |
+|-------------------|----------------------|
+| `severity="critical"` | `name: severity, operator: "=", value: critical` |
+| `instance!="test"` | `name: instance, operator: "!=", value: test` |
+| `service=~"web-.*"` | `name: service, operator: "=~", value: "web-.*"` |
+| `env!~".*test.*"` | `name: env, operator: "!~", value: ".*test.*"` |
+
 ## Backwards Compatibility
 
 The `matchers` field is optional. Existing AlertReaction resources without matchers will continue to work exactly as before, matching only on the `alertName` field.
 
 ## Matcher Evaluation Logic
 
-1. All matchers must evaluate to `true` for the reaction to trigger
+1. All matchers must evaluate to `true` for the reaction to trigger (AND logic)
 2. If any matcher evaluates to `false`, the reaction is skipped
 3. If no matchers are specified, only the `alertName` is checked
-4. Matchers are evaluated in the order they are specified (though all must pass)
+4. Label matching is done against alert labels directly
+5. Annotation matching requires the `annotations.` prefix
 
 ## Performance Considerations
 
 - Matchers are evaluated for every incoming alert
-- Regular expression matchers (`Regex`, `NotRegex`) are more expensive than simple equality checks
-- Consider using `In`/`NotIn` operators instead of multiple `Equal`/`NotEqual` matchers when possible
+- Regular expression matchers (`=~`, `!~`) are more expensive than equality checks (`=`, `!=`)
+- Use regex patterns efficiently - consider anchoring patterns when appropriate
 - Place most selective matchers first to fail fast when possible
