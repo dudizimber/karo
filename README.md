@@ -586,6 +586,35 @@ The hooks will automatically:
 
 See [scripts/hooks/README.md](scripts/hooks/README.md) for detailed information.
 
+### Copilot Prompt System
+
+This project includes a comprehensive prompt library for GitHub Copilot to streamline development:
+
+```bash
+# Quick reference for common tasks
+cat .copilot/quick-prompts.md
+
+# Detailed templates for complex tasks
+ls .copilot/prompts/
+
+# Project context templates
+cat .copilot/context-templates.md
+```
+
+**Available prompt templates:**
+- **Feature Development** - `.copilot/prompts/add-feature.md`
+- **Bug Fixing** - `.copilot/prompts/fix-bug.md` 
+- **Testing** - `.copilot/prompts/add-tests.md`
+- **Code Review** - `.copilot/prompts/code-review.md`
+- **Documentation** - `.copilot/prompts/write-docs.md`
+- **Performance** - `.copilot/prompts/optimize-performance.md`
+- **Refactoring** - `.copilot/prompts/refactor-code.md`
+- **CI/CD** - `.copilot/prompts/ci-cd-updates.md`
+- **CRD Changes** - `.copilot/prompts/crd-changes.md`
+- **Controller Logic** - `.copilot/prompts/controller-logic.md`
+
+See [.copilot/README.md](.copilot/README.md) for complete usage guide.
+
 ### Running Locally
 
 ```bash
