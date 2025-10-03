@@ -144,7 +144,7 @@ jobs:
           cp CHANGELOG.md CHANGELOG.md.backup
           
           # Create temporary changelog for this release
-          cat > release_changelog.md << 'CHANGELOG_EOF'
+          cat > release_changelog.md << CHANGELOG_EOF
           # Release Notes for $VERSION
           
           Released on $TODAY
@@ -152,9 +152,9 @@ jobs:
           CHANGELOG_EOF
           
           # Extract unreleased section from CHANGELOG
-          if grep "\#\# \[Unreleased\]" CHANGELOG.md; then
-            # Get content between [Unreleased] and next version
-            sed -n '/## \[Unreleased\]/,/## \[/p' CHANGELOG.md | head -n -1 | tail -n +2 >> release_changelog.md
+          if grep -q "## \[Unreleased\]" CHANGELOG.md; then
+            # Get content between [Unreleased] and next version using awk for better compatibility
+            awk '/## \[Unreleased\]/{flag=1; next} /^## \[/{flag=0} flag' CHANGELOG.md >> release_changelog.md
           fi
           
           # Add git log since last tag if CHANGELOG is empty or minimal
@@ -183,17 +183,22 @@ jobs:
           fi
           
           # Update main CHANGELOG.md with new version
-          if grep "\#\# \[Unreleased\]" CHANGELOG.md; then
-            # Replace [Unreleased] with version and add new [Unreleased] section
-            sed -i "s/## \[Unreleased\]/## \[Unreleased\]\n\n### Added\n- Prepare for next release\n\n## \[${VERSION#v}\] - $TODAY/" CHANGELOG.md
-            
-            # Update links at bottom
-            if grep -q "\[Unreleased\]:" CHANGELOG.md; then
-              sed -i "s|\[Unreleased\]:.*|[Unreleased]: https://github.com/${{ github.repository }}/compare/$VERSION...HEAD\n[${VERSION#v}]: https://github.com/${{ github.repository }}/releases/tag/$VERSION|" CHANGELOG.md
+          if grep -q "## \[Unreleased\]" CHANGELOG.md; then
+            # Use the manage-changelog.sh script for proper CHANGELOG updates
+            if [[ -f "scripts/manage-changelog.sh" ]]; then
+              ./scripts/manage-changelog.sh release "${VERSION#v}"
             else
-              echo "" >> CHANGELOG.md
-              echo "[Unreleased]: https://github.com/${{ github.repository }}/compare/$VERSION...HEAD" >> CHANGELOG.md
-              echo "[${VERSION#v}]: https://github.com/${{ github.repository }}/releases/tag/$VERSION" >> CHANGELOG.md
+              # Fallback manual update
+              sed -i "s/## \[Unreleased\]/## \[Unreleased\]\n\n### Added\n- Prepare for next release\n\n## \[${VERSION#v}\] - $TODAY/" CHANGELOG.md
+              
+              # Update links at bottom
+              if grep -q "\[Unreleased\]:" CHANGELOG.md; then
+                sed -i "s|\[Unreleased\]:.*|[Unreleased]: https://github.com/${{ github.repository }}/compare/$VERSION...HEAD\n[${VERSION#v}]: https://github.com/${{ github.repository }}/releases/tag/$VERSION|" CHANGELOG.md
+              else
+                echo "" >> CHANGELOG.md
+                echo "[Unreleased]: https://github.com/${{ github.repository }}/compare/$VERSION...HEAD" >> CHANGELOG.md
+                echo "[${VERSION#v}]: https://github.com/${{ github.repository }}/releases/tag/$VERSION" >> CHANGELOG.md
+              fi
             fi
           fi
           
@@ -286,7 +291,7 @@ jobs:
             - Add placeholder for next unreleased changes
             
             [skip ci]"
-            git push origin main
+            git push origin "${{ github.ref_name }}"
           fi
 
       - name: Summary
