@@ -124,65 +124,84 @@ if ! run_check "go test ./... -race -timeout=10m" "Full test suite with race det
     exit 1
 fi
 
-# 7. Generate and verify manifests (for Kubernetes operators)
-if [ -f "Makefile" ] && grep -q "manifests" Makefile; then
-    echo -e "${GREEN}📋 Generating and verifying Kubernetes manifests...${NC}"
+# 7. Generate code and verify manifests (for Kubernetes operators)
+if [ -f "Makefile" ] && grep -q "generate\|manifests" Makefile; then
+    echo -e "${GREEN}� Generating code and Kubernetes manifests...${NC}"
     
-    # Create backup of current manifests
+    # Create backup of current generated files and manifests
+    generated_backup_dir="/tmp/k8s-operator-backup-$$"
+    mkdir -p "$generated_backup_dir"
+    
+    # Backup zz_generated files
+    find . -name "zz_generated.*.go" -not -path "./vendor/*" -not -path "./.git/*" | while read -r file; do
+        backup_path="$generated_backup_dir${file}"
+        mkdir -p "$(dirname "$backup_path")"
+        cp "$file" "$backup_path" 2>/dev/null || true
+    done
+    
+    # Backup manifests
     if [ -d "config/crd" ]; then
-        cp -r config/crd config/crd.backup
+        cp -r config/crd "$generated_backup_dir/crd"
     fi
     if [ -d "config/rbac" ]; then
-        cp -r config/rbac config/rbac.backup
+        cp -r config/rbac "$generated_backup_dir/rbac"
     fi
     
-    # Generate new manifests
-    if ! run_check "make manifests" "Generating Kubernetes manifests"; then
-        echo -e "${RED}❌ Failed to generate manifests${NC}"
-        # Restore backups
-        if [ -d "config/crd.backup" ]; then
-            rm -rf config/crd
-            mv config/crd.backup config/crd
+    # Generate code first (required for manifests)
+    if grep -q "generate" Makefile; then
+        if ! run_check "make generate" "Generating controller code"; then
+            echo -e "${RED}❌ Failed to generate code${NC}"
+            # Restore backups would be complex here, better to fail fast
+            rm -rf "$generated_backup_dir"
+            exit 1
         fi
-        if [ -d "config/rbac.backup" ]; then
-            rm -rf config/rbac
-            mv config/rbac.backup config/rbac
+    fi
+    
+    # Generate manifests
+    if grep -q "manifests" Makefile; then
+        if ! run_check "make manifests" "Generating Kubernetes manifests"; then
+            echo -e "${RED}❌ Failed to generate manifests${NC}"
+            rm -rf "$generated_backup_dir"
+            exit 1
         fi
+    fi
+    
+    # Check if generated files changed
+    generated_changed=false
+    
+    # Check zz_generated files
+    find . -name "zz_generated.*.go" -not -path "./vendor/*" -not -path "./.git/*" | while read -r file; do
+        backup_file="$generated_backup_dir${file}"
+        if [ -f "$backup_file" ] && ! cmp -s "$file" "$backup_file"; then
+            echo -e "${RED}❌ Generated file $file is out of date${NC}"
+            generated_changed=true
+        fi
+    done
+    
+    # Check manifests
+    if [ -d "$generated_backup_dir/crd" ] && [ -d "config/crd" ]; then
+        if ! diff -r config/crd "$generated_backup_dir/crd" >/dev/null 2>&1; then
+            echo -e "${RED}❌ CRD manifests are out of date${NC}"
+            generated_changed=true
+        fi
+    fi
+    
+    if [ -d "$generated_backup_dir/rbac" ] && [ -d "config/rbac" ]; then
+        if ! diff -r config/rbac "$generated_backup_dir/rbac" >/dev/null 2>&1; then
+            echo -e "${RED}❌ RBAC manifests are out of date${NC}"
+            generated_changed=true
+        fi
+    fi
+    
+    # Clean up backup directory
+    rm -rf "$generated_backup_dir"
+    
+    if [ "$generated_changed" = true ]; then
+        echo -e "${YELLOW}💡 Run 'make generate && make manifests' and commit the changes${NC}"
         exit 1
     fi
     
-    # Check if manifests changed
-    if [ -d "config/crd.backup" ] && ! diff -r config/crd config/crd.backup >/dev/null; then
-        echo -e "${RED}❌ CRD manifests are out of date${NC}"
-        echo -e "${YELLOW}💡 Run 'make manifests' and commit the changes${NC}"
-        rm -rf config/crd
-        mv config/crd.backup config/crd
-        if [ -d "config/rbac.backup" ]; then
-            rm -rf config/rbac.backup
-        fi
-        exit 1
-    fi
-    
-    if [ -d "config/rbac.backup" ] && ! diff -r config/rbac config/rbac.backup >/dev/null; then
-        echo -e "${RED}❌ RBAC manifests are out of date${NC}"
-        echo -e "${YELLOW}💡 Run 'make manifests' and commit the changes${NC}"
-        rm -rf config/rbac
-        mv config/rbac.backup config/rbac
-        if [ -d "config/crd.backup" ]; then
-            rm -rf config/crd.backup
-        fi
-        exit 1
-    fi
-    
-    # Clean up backups
-    if [ -d "config/crd.backup" ]; then
-        rm -rf config/crd.backup
-    fi
-    if [ -d "config/rbac.backup" ]; then
-        rm -rf config/rbac.backup
-    fi
-    
-    echo -e "${GREEN}✅ Kubernetes manifests are up to date${NC}"
+    echo -e "${GREEN}✅ Generated code and Kubernetes manifests are up to date${NC}"
 fi
 
 # 8. Check for sensitive information (basic check)
@@ -209,8 +228,8 @@ if [ "$current_branch" = "$protected_branch" ] || [ "$current_branch" = "master"
     echo -e "${YELLOW}💡 Ensure this push has been reviewed and approved${NC}"
     
     # Check if we're ahead of origin
-    if git rev-list --count @{u}.. >/dev/null 2>&1; then
-        commits_ahead=$(git rev-list --count @{u}..)
+    if git rev-list --count '@{u}'.. >/dev/null 2>&1; then
+        commits_ahead=$(git rev-list --count '@{u}'..)
         echo -e "${BLUE}📊 You are $commits_ahead commit(s) ahead of origin/$current_branch${NC}"
     fi
 fi
