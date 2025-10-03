@@ -190,7 +190,7 @@ jobs:
           if grep -q "## \[Unreleased\]" CHANGELOG.md; then
             # Use the manage-changelog.sh script for proper CHANGELOG updates
             if [[ -f "scripts/manage-changelog.sh" ]]; then
-              ./scripts/manage-changelog.sh release "${VERSION#v}"
+              ./scripts/manage-changelog.sh release "${VERSION#v}" >&2
             else
               # Fallback manual update
               sed -i "s/## \[Unreleased\]/## \[Unreleased\]\n\n### Added\n- Prepare for next release\n\n## \[${VERSION#v}\] - $TODAY/" CHANGELOG.md
