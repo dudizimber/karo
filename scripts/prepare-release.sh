@@ -81,9 +81,9 @@ generate_next_version() {
     local current_version=$1
     local increment_type=${2:-patch}
     
-    # Remove 'v' prefix and any pre-release suffix for calculation
+    # Remove 'v' prefix and any pre-release/build metadata for calculation
     local base_version
-    base_version=$(echo "$current_version" | sed 's/^v//' | cut -d'-' -f1)
+    base_version=$(echo "$current_version" | sed 's/^v//' | cut -d'+' -f1 | cut -d'-' -f1)
     
     IFS='.' read -ra VERSION_PARTS <<< "$base_version"
     local major=${VERSION_PARTS[0]}
