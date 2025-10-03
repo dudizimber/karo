@@ -186,23 +186,11 @@ jobs:
             git log --pretty=format:"- %s (%h)" >> release_changelog.md
           fi
           
-          # Update main CHANGELOG.md with new version
+          # Update main CHANGELOG.md with new version (suppress all output)
           if grep -q "## \[Unreleased\]" CHANGELOG.md; then
-            # Use the manage-changelog.sh script for proper CHANGELOG updates
+            # Use the manage-changelog.sh script but silence all output
             if [[ -f "scripts/manage-changelog.sh" ]]; then
-              ./scripts/manage-changelog.sh release "${VERSION#v}" >&2
-            else
-              # Fallback manual update
-              sed -i "s/## \[Unreleased\]/## \[Unreleased\]\n\n### Added\n- Prepare for next release\n\n## \[${VERSION#v}\] - $TODAY/" CHANGELOG.md
-              
-              # Update links at bottom
-              if grep -q "\[Unreleased\]:" CHANGELOG.md; then
-                sed -i "s|\[Unreleased\]:.*|[Unreleased]: https://github.com/${{ github.repository }}/compare/$VERSION...HEAD\n[${VERSION#v}]: https://github.com/${{ github.repository }}/releases/tag/$VERSION|" CHANGELOG.md
-              else
-                echo "" >> CHANGELOG.md
-                echo "[Unreleased]: https://github.com/${{ github.repository }}/compare/$VERSION...HEAD" >> CHANGELOG.md
-                echo "[${VERSION#v}]: https://github.com/${{ github.repository }}/releases/tag/$VERSION" >> CHANGELOG.md
-              fi
+              ./scripts/manage-changelog.sh release "${VERSION#v}" >/dev/null 2>&1 || true
             fi
           fi
           
