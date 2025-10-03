@@ -423,6 +423,34 @@ subjects:
   namespace: default
 ```
 
+## Official Actions Repository
+
+### Pre-built Alert Reactions
+
+The [**dudizimber/alert-reactions**](https://github.com/dudizimber/alert-reactions) repository provides a curated collection of production-ready AlertReaction manifests for common operational scenarios.
+
+#### Using Official Actions
+
+1. **Browse Available Actions**: Visit [dudizimber/alert-reactions](https://github.com/dudizimber/alert-reactions) to explore all available reactions
+2. **Review Configuration**: Each action includes detailed configuration examples and prerequisites
+3. **Customize for Your Environment**: Modify resource limits, image versions, and environment-specific settings
+4. **Deploy**: Apply the manifests to your cluster using `kubectl` or your GitOps workflow
+
+#### Contributing Actions
+
+Help grow the official actions library:
+
+```bash
+# Fork the repository
+gh repo fork dudizimber/alert-reactions
+
+# Create a new action category
+mkdir -p my-category/my-action
+
+# Add your AlertReaction manifest and documentation
+# Submit a pull request with your contribution
+```
+
 ## Operations
 
 ### Monitoring the Operator
