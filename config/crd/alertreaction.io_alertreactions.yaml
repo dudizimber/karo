@@ -204,6 +204,60 @@ spec:
                 description: AlertName specifies the Prometheus alert name to react
                   to
                 type: string
+              matchers:
+                description: |-
+                  Matchers defines additional conditions that must be met for the alert to trigger this reaction
+                  All matchers must match for the reaction to be triggered
+                  If no matchers are specified, only the AlertName is used for matching
+                items:
+                  description: AlertMatcher defines conditions for matching alerts
+                    based on their attributes
+                  properties:
+                    name:
+                      description: Name of the alert attribute to match against (e.g.,
+                        "labels.instance", "annotations.severity", "status")
+                      type: string
+                    operator:
+                      allOf:
+                      - enum:
+                        - Equal
+                        - NotEqual
+                        - In
+                        - NotIn
+                        - Exists
+                        - DoesNotExist
+                        - GreaterThan
+                        - LessThan
+                        - Regex
+                        - NotRegex
+                      - enum:
+                        - Equal
+                        - NotEqual
+                        - In
+                        - NotIn
+                        - Exists
+                        - DoesNotExist
+                        - GreaterThan
+                        - LessThan
+                        - Regex
+                        - NotRegex
+                      description: |-
+                        Operator defines how to compare the alert attribute value with the expected value
+                        Supported operators: Equal, NotEqual, In, NotIn, Exists, DoesNotExist, GreaterThan, LessThan, Regex, NotRegex
+                      type: string
+                    values:
+                      description: |-
+                        Values are the expected values to match against (not required for Exists/DoesNotExist operators)
+                        For "In" and "NotIn" operators, multiple values can be specified
+                        For other operators, only the first value is used
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - name
+                  - operator
+                  type: object
+                type: array
               volumes:
                 description: |-
                   Volumes defines volumes that can be mounted by actions in this AlertReaction

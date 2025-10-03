@@ -1,0 +1,92 @@
+apiVersion: alerts.davidzimberknopf.io/v1alpha1
+kind: AlertReaction
+metadata:
+  name: critical-service-alert-reaction
+  namespace: default
+spec:
+  # The basic alert name to match
+  alertName: "ServiceDown"
+  
+  # Additional matchers for fine-grained control
+  matchers:
+    # Match alerts with severity label equal to "critical"
+    - name: "labels.severity"
+      operator: Equal
+      values: ["critical"]
+    
+    # Match alerts for specific services
+    - name: "labels.service"
+      operator: In
+      values: ["web-server", "api-gateway", "database"]
+    
+    # Ensure the alert has an instance label (exists check)
+    - name: "labels.instance"
+      operator: Exists
+    
+    # Match alerts where the runbook annotation contains "emergency"
+    - name: "annotations.runbook"
+      operator: Regex
+      values: [".*emergency.*"]
+  
+  # Actions to perform when all matchers are satisfied
+  actions:
+    - name: "send-notification"
+      image: "curlimages/curl:latest"
+      command: ["curl"]
+      args:
+        - "-X"
+        - "POST"
+        - "-H"
+        - "Content-Type: application/json"
+        - "-d"
+        - '{"text":"Critical service alert triggered for {{ .Labels.service }} on {{ .Labels.instance }}"}'
+        - "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+    
+    - name: "restart-service"
+      image: "bitnami/kubectl:latest"
+      command: ["kubectl"]
+      args:
+        - "rollout"
+        - "restart"
+        - "deployment/{{ .Labels.service }}"
+        - "-n"
+        - "production"
+      serviceAccountName: "alertreaction-restart-sa"
+
+---
+apiVersion: alerts.davidzimberknopf.io/v1alpha1
+kind: AlertReaction
+metadata:
+  name: memory-threshold-reaction
+  namespace: monitoring
+spec:
+  alertName: "HighMemoryUsage"
+  
+  # Match only when memory usage is above 90%
+  matchers:
+    # Check if the value annotation contains a percentage > 90
+    - name: "annotations.value"
+      operator: Regex
+      values: ["9[0-9]\\.[0-9]+%|100%"]
+    
+    # Match only production environment
+    - name: "labels.environment"
+      operator: Equal
+      values: ["production"]
+    
+    # Exclude test instances
+    - name: "labels.instance"
+      operator: NotRegex
+      values: [".*test.*", ".*staging.*"]
+  
+  actions:
+    - name: "scale-up"
+      image: "bitnami/kubectl:latest"
+      command: ["kubectl"]
+      args:
+        - "scale"
+        - "deployment/{{ .Labels.deployment }}"
+        - "--replicas=5"
+        - "-n"
+        - "{{ .Labels.namespace }}"
+      serviceAccountName: "alertreaction-scale-sa"

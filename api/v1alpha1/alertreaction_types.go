@@ -30,11 +30,61 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	return nil
 }
 
+// AlertMatcher defines conditions for matching alerts based on their attributes
+type AlertMatcher struct {
+	// Name of the alert attribute to match against (e.g., "labels.instance", "annotations.severity", "status")
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Operator defines how to compare the alert attribute value with the expected value
+	// Supported operators: Equal, NotEqual, In, NotIn, Exists, DoesNotExist, GreaterThan, LessThan, Regex, NotRegex
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=Equal;NotEqual;In;NotIn;Exists;DoesNotExist;GreaterThan;LessThan;Regex;NotRegex
+	Operator MatchOperator `json:"operator"`
+
+	// Values are the expected values to match against (not required for Exists/DoesNotExist operators)
+	// For "In" and "NotIn" operators, multiple values can be specified
+	// For other operators, only the first value is used
+	Values []string `json:"values,omitempty"`
+}
+
+// MatchOperator defines the type of matching operation to perform
+// +kubebuilder:validation:Enum=Equal;NotEqual;In;NotIn;Exists;DoesNotExist;GreaterThan;LessThan;Regex;NotRegex
+type MatchOperator string
+
+const (
+	// MatchOperatorEqual checks if the alert attribute equals the specified value
+	MatchOperatorEqual MatchOperator = "Equal"
+	// MatchOperatorNotEqual checks if the alert attribute does not equal the specified value
+	MatchOperatorNotEqual MatchOperator = "NotEqual"
+	// MatchOperatorIn checks if the alert attribute value is in the list of specified values
+	MatchOperatorIn MatchOperator = "In"
+	// MatchOperatorNotIn checks if the alert attribute value is not in the list of specified values
+	MatchOperatorNotIn MatchOperator = "NotIn"
+	// MatchOperatorExists checks if the alert attribute exists (regardless of value)
+	MatchOperatorExists MatchOperator = "Exists"
+	// MatchOperatorDoesNotExist checks if the alert attribute does not exist
+	MatchOperatorDoesNotExist MatchOperator = "DoesNotExist"
+	// MatchOperatorGreaterThan checks if the alert attribute value is greater than the specified value (numeric comparison)
+	MatchOperatorGreaterThan MatchOperator = "GreaterThan"
+	// MatchOperatorLessThan checks if the alert attribute value is less than the specified value (numeric comparison)
+	MatchOperatorLessThan MatchOperator = "LessThan"
+	// MatchOperatorRegex checks if the alert attribute value matches the specified regular expression
+	MatchOperatorRegex MatchOperator = "Regex"
+	// MatchOperatorNotRegex checks if the alert attribute value does not match the specified regular expression
+	MatchOperatorNotRegex MatchOperator = "NotRegex"
+)
+
 // AlertReactionSpec defines the desired state of AlertReaction
 type AlertReactionSpec struct {
 	// AlertName specifies the Prometheus alert name to react to
 	// +kubebuilder:validation:Required
 	AlertName string `json:"alertName"`
+
+	// Matchers defines additional conditions that must be met for the alert to trigger this reaction
+	// All matchers must match for the reaction to be triggered
+	// If no matchers are specified, only the AlertName is used for matching
+	Matchers []AlertMatcher `json:"matchers,omitempty"`
 
 	// Actions defines the list of actions to perform when the alert is received
 	// +kubebuilder:validation:Required
