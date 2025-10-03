@@ -236,10 +236,21 @@ jobs:
           cp -r charts release/
           cp README.md LICENSE CHANGELOG.md release/
           
-          # Create tarball
-          tar -czf release/alert-reaction-operator-${VERSION#v}.tar.gz -C release .
+          # Create tarball by explicitly listing contents to avoid race conditions
+          cd release
+          tar -czf ../alert-reaction-operator-${VERSION#v}.tar.gz \
+            alert-reaction-operator \
+            config/ \
+            examples/ \
+            scripts/ \
+            charts/ \
+            README.md \
+            LICENSE \
+            CHANGELOG.md
+          cd ..
           
-          # Create checksums
+          # Move tarball to release directory and create checksums
+          mv alert-reaction-operator-${VERSION#v}.tar.gz release/
           cd release
           sha256sum *.tar.gz > checksums.txt
           cd ..
