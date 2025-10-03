@@ -33,7 +33,6 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
-      changelog: ${{ steps.changelog.outputs.changelog }}
       prerelease: ${{ steps.version.outputs.prerelease }}
     
     steps:
@@ -194,10 +193,15 @@ jobs:
             fi
           fi
           
-          # Set output
-          echo "CHANGELOG<<CHANGELOG_DELIMITER" >> $GITHUB_OUTPUT
-          cat release_changelog.md >> $GITHUB_OUTPUT
-          echo "CHANGELOG_DELIMITER" >> $GITHUB_OUTPUT
+          # Ensure release changelog file exists for later steps
+          if [[ ! -f "release_changelog.md" ]]; then
+            echo "Creating fallback changelog as release_changelog.md was not found" >&2
+            echo "# Release Notes for $VERSION" > release_changelog.md
+            echo "" >> release_changelog.md
+            echo "Released on $TODAY" >> release_changelog.md
+          fi
+          
+          echo "Release changelog prepared: release_changelog.md"
 
       - name: Validate version doesn't exist
         run: |
