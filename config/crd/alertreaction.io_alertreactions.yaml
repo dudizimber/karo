@@ -226,6 +226,11 @@ spec:
                         - '!='
                         - =~
                         - '!~'
+                      - enum:
+                        - =
+                        - '!='
+                        - =~
+                        - '!~'
                       description: |-
                         Operator defines the Prometheus-style matching operator
                         "=" for equality, "!=" for inequality, "=~" for regex match, "!~" for negative regex match
