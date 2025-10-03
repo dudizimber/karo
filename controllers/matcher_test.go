@@ -15,11 +15,11 @@ func TestAlertMatching(t *testing.T) {
 
 	// Create AlertReactions with different matchers
 	tests := []struct {
-		name           string
-		alertReaction  *alertreactionv1alpha1.AlertReaction
-		alertData      map[string]interface{}
-		shouldMatch    bool
-		description    string
+		name          string
+		alertReaction *alertreactionv1alpha1.AlertReaction
+		alertData     map[string]interface{}
+		shouldMatch   bool
+		description   string
 	}{
 		{
 			name: "no-matchers-should-match",
