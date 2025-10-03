@@ -8,11 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project setup and documentation
-
-## [0.1.0] - 2025-10-01
-
-### Added
 - AlertReaction Custom Resource Definition (CRD)
 - AlertReaction controller with reconciliation logic
 - Webhook server for AlertManager integration
@@ -25,6 +20,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Monitoring and observability features
 - Security policies and RBAC configuration
 - Documentation and contribution guidelines
+- Draft-first release process with comprehensive release automation
+- CHANGELOG automation and validation tooling
+- Enhanced Helm chart release pipeline with CRD bundling
+- Release preparation and management scripts
+- Comprehensive release documentation and automation guides
+
+### Changed
+- Restructured CI/CD pipeline to separate concerns (testing vs releasing)
+- Moved release process to draft-first approach for better control
+- Enhanced Helm chart automation with multi-format publishing
+- Improved release workflow with CHANGELOG integration and validation
+- Updated chart documentation to reflect bundled CRDs
+
+### Improved
+- Release process now requires manual approval before publishing
+- Helm charts automatically bundle latest CRDs from config/crd/
+- Enhanced release notes generation with CHANGELOG integration
+- Better separation between CI/CD and release pipelines
+- Streamlined user experience with automatic CRD installation
 
 ### Features
 - **Alert Matching**: Flexible alert selection using labels and annotations
@@ -42,6 +56,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Helm Deployment**: Production-ready Helm chart with configurable values
 - **CI/CD Pipeline**: Automated testing, building, and security scanning
 - **Monitoring**: Prometheus metrics and ServiceMonitor support
+- **Release Automation**: Draft-first release workflow with manual approval gates
+- **CHANGELOG Management**: Automated CHANGELOG processing and validation
+- **Helm Publishing**: Multi-format chart publishing (OCI registry, GitHub Pages, release assets)
+- **CRD Bundling**: Automatic inclusion of latest CRDs in Helm charts during release
+- **Documentation**: Enhanced release process documentation and user guides
 
 ### Security
 - **RBAC**: Minimal required permissions with ClusterRole/ClusterRoleBinding
@@ -57,5 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Contributing Guide**: Development setup and contribution guidelines
 - **Operations Guide**: Monitoring, troubleshooting, and maintenance procedures
 
+### Removed
+- Duplicate CRD files from charts directory (now bundled during release)
+- Manual CRD installation requirement for users
+- Release job from CI/CD pipeline (moved to separate workflow)
+
 [Unreleased]: https://github.com/dudizimber/k8s-alert-reaction-operator/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/dudizimber/k8s-alert-reaction-operator/releases/tag/v0.1.0

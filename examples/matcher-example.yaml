@@ -1,4 +1,4 @@
-apiVersion: alerts.davidzimberknopf.io/v1alpha1
+apiVersion: alertreaction.io/v1alpha1
 kind: AlertReaction
 metadata:
   name: critical-service-alert-reaction
@@ -50,7 +50,7 @@ spec:
       serviceAccountName: "alertreaction-restart-sa"
 
 ---
-apiVersion: alerts.davidzimberknopf.io/v1alpha1
+apiVersion: alertreaction.io/v1alpha1
 kind: AlertReaction
 metadata:
   name: memory-threshold-reaction

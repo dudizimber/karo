@@ -1,0 +1,43 @@
+# Example values for development environment
+image:
+  repository: docker.io/dudizimber/k8s-alert-reaction-operator
+  tag: "latest"
+  pullPolicy: Always
+
+# Enable metrics and monitoring for development
+operator:
+  metrics:
+    enabled: true
+
+# Enable ingress for easy webhook access
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+  hosts:
+    - host: alert-reaction-dev.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+# Enable monitoring
+monitoring:
+  serviceMonitor:
+    enabled: true
+  prometheusRule:
+    enabled: true
+
+# Development resource limits
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Enable debug logging
+env:
+  - name: LOG_LEVEL
+    value: "debug"

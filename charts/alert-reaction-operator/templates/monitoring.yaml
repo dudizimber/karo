@@ -1,0 +1,86 @@
+{{- if and .Values.monitoring.serviceMonitor.enabled .Values.operator.metrics.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "alert-reaction-operator.fullname" . }}
+  namespace: {{ default .Release.Namespace .Values.monitoring.serviceMonitor.namespace }}
+  labels:
+    {{- include "alert-reaction-operator.labels" . | nindent 4 }}
+  {{- with .Values.monitoring.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.monitoring.serviceMonitor.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with include "alert-reaction-operator.annotations" . }}
+    {{- . | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "alert-reaction-operator.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: metrics
+  endpoints:
+  - port: metrics
+    path: {{ .Values.monitoring.serviceMonitor.path }}
+    interval: {{ .Values.monitoring.serviceMonitor.interval }}
+    scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+{{- end }}
+---
+{{- if .Values.monitoring.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "alert-reaction-operator.fullname" . }}
+  namespace: {{ default .Release.Namespace .Values.monitoring.prometheusRule.namespace }}
+  labels:
+    {{- include "alert-reaction-operator.labels" . | nindent 4 }}
+  {{- with .Values.monitoring.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.monitoring.prometheusRule.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with include "alert-reaction-operator.annotations" . }}
+    {{- . | nindent 4 }}
+  {{- end }}
+spec:
+  groups:
+  - name: alert-reaction-operator
+    rules:
+    - alert: AlertReactionOperatorDown
+      expr: up{job="alert-reaction-operator"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Alert Reaction Operator is down"
+        description: "Alert Reaction Operator has been down for more than 5 minutes."
+    
+    - alert: AlertReactionOperatorHighMemory
+      expr: process_resident_memory_bytes{job="alert-reaction-operator"} / 1024 / 1024 > 100
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Alert Reaction Operator high memory usage"
+        description: "Alert Reaction Operator is using more than 100MB of memory."
+    
+    - alert: AlertReactionOperatorHighCPU
+      expr: rate(process_cpu_seconds_total{job="alert-reaction-operator"}[5m]) * 100 > 80
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Alert Reaction Operator high CPU usage"
+        description: "Alert Reaction Operator is using more than 80% CPU."
+    
+    {{- if .Values.monitoring.prometheusRule.rules }}
+    {{- toYaml .Values.monitoring.prometheusRule.rules | nindent 4 }}
+    {{- end }}
+{{- end }}

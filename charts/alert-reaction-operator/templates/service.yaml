@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "alert-reaction-operator.webhookServiceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "alert-reaction-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook
+  {{- with .Values.service.webhook.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with include "alert-reaction-operator.annotations" . }}
+    {{- . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.webhook.type }}
+  ports:
+  - name: webhook
+    port: {{ .Values.service.webhook.port }}
+    targetPort: webhook
+    protocol: TCP
+  selector:
+    {{- include "alert-reaction-operator.selectorLabels" . | nindent 4 }}
+---
+{{- if .Values.operator.metrics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "alert-reaction-operator.metricsServiceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "alert-reaction-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+  {{- with .Values.service.metrics.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with include "alert-reaction-operator.annotations" . }}
+    {{- . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.metrics.type }}
+  ports:
+  - name: metrics
+    port: {{ .Values.service.metrics.port }}
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    {{- include "alert-reaction-operator.selectorLabels" . | nindent 4 }}
+{{- end }}

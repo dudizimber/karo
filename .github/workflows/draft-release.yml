@@ -1,0 +1,278 @@
+name: Draft Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Is this a pre-release?'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  prepare-release:
+    name: Prepare Draft Release
+    runs-on: ubuntu-latest
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Manual trigger - use provided version
+            VERSION="${{ inputs.version }}"
+            if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+              echo "Invalid version format: $VERSION"
+              echo "Expected format: vX.Y.Z or vX.Y.Z-suffix"
+              exit 1
+            fi
+            PRERELEASE="${{ inputs.prerelease }}"
+          else
+            # Automatic trigger - generate next version
+            # Get latest tag
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            echo "Latest tag: $LATEST_TAG"
+            
+            # Extract version parts
+            if [[ $LATEST_TAG =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-.*)?$ ]]; then
+              MAJOR="${BASH_REMATCH[1]}"
+              MINOR="${BASH_REMATCH[2]}"
+              PATCH="${BASH_REMATCH[3]}"
+              SUFFIX="${BASH_REMATCH[4]}"
+            else
+              MAJOR=0
+              MINOR=1
+              PATCH=0
+              SUFFIX=""
+            fi
+            
+            # Determine increment type based on commit messages since last tag
+            if git log --pretty=format:"%s" ${LATEST_TAG}..HEAD | grep -E "^(feat!|fix!|BREAKING CHANGE)" > /dev/null; then
+              # Breaking changes - increment major
+              VERSION="v$((MAJOR + 1)).0.0"
+            elif git log --pretty=format:"%s" ${LATEST_TAG}..HEAD | grep -E "^feat" > /dev/null; then
+              # New features - increment minor
+              VERSION="v${MAJOR}.$((MINOR + 1)).0"
+            else
+              # Bug fixes/patches - increment patch
+              VERSION="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+            fi
+            
+            # Check if there are any unreleased changes
+            if [[ $(git rev-list ${LATEST_TAG}..HEAD --count) -eq 0 ]]; then
+              echo "No changes since last release ${LATEST_TAG}"
+              exit 0
+            fi
+            
+            PRERELEASE=false
+          fi
+          
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=$VERSION" >> $GITHUB_OUTPUT
+          echo "PRERELEASE=$PRERELEASE" >> $GITHUB_OUTPUT
+          
+          echo "Determined version: $VERSION"
+          echo "Pre-release: $PRERELEASE"
+
+      - name: Process CHANGELOG
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TODAY=$(date +%Y-%m-%d)
+          
+          # Create backup of CHANGELOG
+          cp CHANGELOG.md CHANGELOG.md.backup
+          
+          # Create temporary changelog for this release
+          cat > release_changelog.md << EOF
+          # Release Notes for $VERSION
+          
+          Released on $TODAY
+          
+          EOF
+          
+          # Extract unreleased section from CHANGELOG
+          if grep -q "## \[Unreleased\]" CHANGELOG.md; then
+            # Get content between [Unreleased] and next version
+            sed -n '/## \[Unreleased\]/,/## \[/p' CHANGELOG.md | head -n -1 | tail -n +2 >> release_changelog.md
+          fi
+          
+          # Add git log since last tag if CHANGELOG is empty or minimal
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [[ -n "$LATEST_TAG" ]]; then
+            echo "" >> release_changelog.md
+            echo "## Changes since $LATEST_TAG" >> release_changelog.md
+            echo "" >> release_changelog.md
+            
+            # Categorize commits
+            echo "### Features" >> release_changelog.md
+            git log --pretty=format:"- %s (%h)" ${LATEST_TAG}..HEAD --grep="^feat" >> release_changelog.md || echo "- No new features" >> release_changelog.md
+            echo "" >> release_changelog.md
+            
+            echo "### Bug Fixes" >> release_changelog.md
+            git log --pretty=format:"- %s (%h)" ${LATEST_TAG}..HEAD --grep="^fix" >> release_changelog.md || echo "- No bug fixes" >> release_changelog.md
+            echo "" >> release_changelog.md
+            
+            echo "### Other Changes" >> release_changelog.md
+            git log --pretty=format:"- %s (%h)" ${LATEST_TAG}..HEAD --invert-grep --grep="^feat" --grep="^fix" >> release_changelog.md || echo "- No other changes" >> release_changelog.md
+          else
+            echo "" >> release_changelog.md
+            echo "## All Changes" >> release_changelog.md
+            echo "" >> release_changelog.md
+            git log --pretty=format:"- %s (%h)" >> release_changelog.md
+          fi
+          
+          # Update main CHANGELOG.md with new version
+          if grep -q "## \[Unreleased\]" CHANGELOG.md; then
+            # Replace [Unreleased] with version and add new [Unreleased] section
+            sed -i "s/## \[Unreleased\]/## \[Unreleased\]\n\n### Added\n- Prepare for next release\n\n## \[${VERSION#v}\] - $TODAY/" CHANGELOG.md
+            
+            # Update links at bottom
+            if grep -q "\[Unreleased\]:" CHANGELOG.md; then
+              sed -i "s|\[Unreleased\]:.*|[Unreleased]: https://github.com/${{ github.repository }}/compare/$VERSION...HEAD\n[${VERSION#v}]: https://github.com/${{ github.repository }}/releases/tag/$VERSION|" CHANGELOG.md
+            else
+              echo "" >> CHANGELOG.md
+              echo "[Unreleased]: https://github.com/${{ github.repository }}/compare/$VERSION...HEAD" >> CHANGELOG.md
+              echo "[${VERSION#v}]: https://github.com/${{ github.repository }}/releases/tag/$VERSION" >> CHANGELOG.md
+            fi
+          fi
+          
+          # Set output
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          cat release_changelog.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Validate version doesn't exist
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if git tag -l | grep -q "^${VERSION}$"; then
+            echo "Tag $VERSION already exists!"
+            exit 1
+          fi
+          
+          # Check if draft release already exists
+          if gh release view "$VERSION" --json isDraft --jq '.isDraft' 2>/dev/null | grep -q "true"; then
+            echo "Draft release $VERSION already exists"
+            gh release view "$VERSION"
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build release artifacts
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Build binary
+          make build
+          
+          # Create release bundle
+          mkdir -p release
+          cp bin/manager release/alert-reaction-operator
+          cp -r config release/
+          cp -r examples release/
+          cp -r scripts release/
+          cp -r charts release/
+          cp README.md LICENSE CHANGELOG.md release/
+          
+          # Create tarball
+          tar -czf release/alert-reaction-operator-${VERSION#v}.tar.gz -C release .
+          
+          # Create checksums
+          cd release
+          sha256sum *.tar.gz > checksums.txt
+          cd ..
+
+      - name: Create draft release
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PRERELEASE="${{ steps.version.outputs.prerelease }}"
+          
+          # Create draft release
+          PRERELEASE_FLAG=""
+          if [[ "$PRERELEASE" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          
+          gh release create "$VERSION" \
+            --draft \
+            $PRERELEASE_FLAG \
+            --title "Release $VERSION" \
+            --notes-file release_changelog.md \
+            release/*.tar.gz \
+            release/checksums.txt
+          
+          echo "Created draft release: $VERSION"
+          echo "Review and publish at: https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit CHANGELOG updates
+        if: github.event_name == 'push'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Commit CHANGELOG updates
+          if [[ -n "$(git status --porcelain CHANGELOG.md)" ]]; then
+            git add CHANGELOG.md
+            git commit -m "docs: update CHANGELOG for $VERSION
+            
+            - Prepare release notes for $VERSION
+            - Move unreleased changes to version section
+            - Add placeholder for next unreleased changes
+            
+            [skip ci]"
+            git push origin main
+          fi
+
+      - name: Summary
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "## 📋 Draft Release Created!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🏷️ Version: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 [Review Draft Release](https://github.com/${{ github.repository }}/releases/tag/$VERSION)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📝 Next Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review the draft release notes and artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test the release artifacts if needed" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Publish the release** to trigger Helm chart automation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚠️ Important:" >> $GITHUB_STEP_SUMMARY
+          echo "- The Helm chart will only be released when you **publish** the draft release" >> $GITHUB_STEP_SUMMARY
+          echo "- Publishing will trigger the full release pipeline including chart packaging" >> $GITHUB_STEP_SUMMARY

@@ -59,12 +59,12 @@ The Alert Reaction Operator bridges the gap between monitoring and automated rem
 helm install alert-reaction-operator ./charts/alert-reaction-operator
 
 # Install for development
-helm install alert-reaction-operator ./charts/alert-reaction-operator \\\\
+helm install alert-reaction-operator ./charts/alert-reaction-operator \
   -f ./charts/alert-reaction-operator/values-dev.yaml
 
 # Install for production
-helm install alert-reaction-operator ./charts/alert-reaction-operator \\\\
-  -f ./charts/alert-reaction-operator/values-prod.yaml \\\\
+helm install alert-reaction-operator ./charts/alert-reaction-operator \
+  -f ./charts/alert-reaction-operator/values-prod.yaml \
   --namespace monitoring --create-namespace
 ```
 
@@ -522,8 +522,8 @@ kubectl get endpoints alert-reaction-operator-webhook
 
 # Test webhook manually
 kubectl port-forward svc/alert-reaction-operator-webhook 9090:9090
-curl -X POST http://localhost:9090/webhook \\\\
-  -H "Content-Type: application/json" \\\\
+curl -X POST http://localhost:9090/webhook \
+  -H "Content-Type: application/json" \
   -d '{"alerts":[{"labels":{"alertname":"TestAlert"}}]}'
 ```
 
@@ -642,6 +642,92 @@ cat .copilot/context-templates.md
 - **Controller Logic** - `.copilot/prompts/controller-logic.md`
 
 See [.copilot/README.md](.copilot/README.md) for complete usage guide.
+
+### Helm Chart Release Automation
+
+This project includes automated Helm chart releases that are triggered when new tags are created:
+
+#### Manual Chart Management
+
+```bash
+# Validate the current chart
+./scripts/validate-chart.sh
+
+# Update chart version manually
+./scripts/update-chart.sh 1.0.0
+
+# Show current chart versions
+./scripts/update-chart.sh --current
+
+# Generate next version automatically
+./scripts/update-chart.sh --next patch   # 1.0.0 -> 1.0.1
+./scripts/update-chart.sh --next minor   # 1.0.0 -> 1.1.0
+./scripts/update-chart.sh --next major   # 1.0.0 -> 2.0.0
+
+# Dry run to see what would change
+./scripts/update-chart.sh --dry-run 1.0.0
+
+# Only run validation checks
+./scripts/update-chart.sh --lint-only
+```
+
+#### Draft-First Release Process
+
+The release process uses a two-phase approach for better control and validation:
+
+**Phase 1: Draft Release Creation**
+```bash
+# Automatic - pushes to main trigger draft releases
+./scripts/manage-changelog.sh add added "New feature description"
+git add -A && git commit -m "feat: add new feature" && git push
+
+# Manual - create specific version
+./scripts/prepare-release.sh v1.0.0
+
+# Or trigger via GitHub CLI
+gh workflow run draft-release.yml -f version=v1.0.0
+```
+
+**Phase 2: Helm Chart Release (When Draft is Published)**
+
+When you publish a draft release, the Helm automation automatically:
+
+1. **Processes CHANGELOG**: Extracts release notes and change details
+2. **Updates Chart Metadata**: Sets versions and repository URLs  
+3. **Validates Charts**: Runs comprehensive validation suite
+4. **Packages and Publishes**: Creates multi-format chart packages
+5. **Updates Repositories**: OCI registry, GitHub releases, Helm repo
+
+#### Installation Methods After Release
+
+```bash
+# From OCI Registry (Recommended)
+helm install alert-reaction-operator oci://ghcr.io/dudizimber/charts/alert-reaction-operator --version 1.0.0
+
+# From Helm Repository  
+helm repo add alert-reaction-operator https://dudizimber.github.io/k8s-alert-reaction-operator/
+helm install alert-reaction-operator alert-reaction-operator/alert-reaction-operator --version 1.0.0
+
+# From GitHub Release Assets
+curl -L https://github.com/dudizimber/k8s-alert-reaction-operator/releases/download/v1.0.0/alert-reaction-operator-1.0.0.tgz -o chart.tgz
+helm install alert-reaction-operator ./chart.tgz
+```
+
+#### CHANGELOG Management
+
+```bash
+# Add entries to unreleased section
+./scripts/manage-changelog.sh add added "New webhook endpoint"
+./scripts/manage-changelog.sh add fixed "Memory leak fix"
+
+# View unreleased changes
+./scripts/manage-changelog.sh show
+
+# Validate format
+./scripts/manage-changelog.sh validate
+```
+
+The draft-first approach allows review and testing before final publication triggers chart automation.
 
 ### Running Locally
 

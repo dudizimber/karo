@@ -39,8 +39,6 @@ Thumbs.db
 kubeconfig
 *.kubeconfig
 
-# Helm
-charts/
 
 # Temporary files
 *.tmp

@@ -1,0 +1,70 @@
+# Example values for production environment
+image:
+  repository: docker.io/dudizimber/k8s-alert-reaction-operator
+  tag: "v0.1.0"  # Use specific version in production
+  pullPolicy: IfNotPresent
+
+# Production replicas and autoscaling
+replicaCount: 2
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Production resource limits
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Pod disruption budget for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Monitoring enabled
+monitoring:
+  serviceMonitor:
+    enabled: true
+    labels:
+      monitoring: "prometheus"
+  prometheusRule:
+    enabled: true
+    labels:
+      monitoring: "prometheus"
+
+# Security context
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 65534
+  capabilities:
+    drop:
+    - ALL
+
+# Node affinity for production nodes
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/worker
+          operator: In
+          values: ["true"]
+
+# Tolerations for dedicated monitoring nodes
+tolerations:
+  - key: "monitoring"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"
+
+# Production logging
+env:
+  - name: LOG_LEVEL
+    value: "info"
