@@ -30,11 +30,51 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	return nil
 }
 
+// AlertMatcher defines conditions for matching alerts using Prometheus-style operators
+type AlertMatcher struct {
+	// Name of the label or annotation to match against (e.g., "severity", "instance", "service")
+	// For labels, this matches against alert labels directly
+	// For annotations, prefix with "annotations." (e.g., "annotations.runbook")
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Operator defines the Prometheus-style matching operator
+	// "=" for equality, "!=" for inequality, "=~" for regex match, "!~" for negative regex match
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum="=";"!=";"=~";"!~"
+	Operator MatchOperator `json:"operator"`
+
+	// Value is the value to match against
+	// For regex operators (=~ and !~), this should be a valid regular expression
+	// +kubebuilder:validation:Required
+	Value string `json:"value"`
+}
+
+// MatchOperator defines Prometheus-style matching operators
+// +kubebuilder:validation:Enum="=";"!=";"=~";"!~"
+type MatchOperator string
+
+const (
+	// MatchOperatorEqual ("=") checks if the label/annotation equals the specified value
+	MatchOperatorEqual MatchOperator = "="
+	// MatchOperatorNotEqual ("!=") checks if the label/annotation does not equal the specified value
+	MatchOperatorNotEqual MatchOperator = "!="
+	// MatchOperatorRegexMatch ("=~") checks if the label/annotation matches the specified regular expression
+	MatchOperatorRegexMatch MatchOperator = "=~"
+	// MatchOperatorRegexNotMatch ("!~") checks if the label/annotation does not match the specified regular expression
+	MatchOperatorRegexNotMatch MatchOperator = "!~"
+)
+
 // AlertReactionSpec defines the desired state of AlertReaction
 type AlertReactionSpec struct {
 	// AlertName specifies the Prometheus alert name to react to
 	// +kubebuilder:validation:Required
 	AlertName string `json:"alertName"`
+
+	// Matchers defines additional conditions that must be met for the alert to trigger this reaction
+	// All matchers must match for the reaction to be triggered
+	// If no matchers are specified, only the AlertName is used for matching
+	Matchers []AlertMatcher `json:"matchers,omitempty"`
 
 	// Actions defines the list of actions to perform when the alert is received
 	// +kubebuilder:validation:Required

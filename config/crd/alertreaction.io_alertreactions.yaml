@@ -204,6 +204,48 @@ spec:
                 description: AlertName specifies the Prometheus alert name to react
                   to
                 type: string
+              matchers:
+                description: |-
+                  Matchers defines additional conditions that must be met for the alert to trigger this reaction
+                  All matchers must match for the reaction to be triggered
+                  If no matchers are specified, only the AlertName is used for matching
+                items:
+                  description: AlertMatcher defines conditions for matching alerts
+                    using Prometheus-style operators
+                  properties:
+                    name:
+                      description: |-
+                        Name of the label or annotation to match against (e.g., "severity", "instance", "service")
+                        For labels, this matches against alert labels directly
+                        For annotations, prefix with "annotations." (e.g., "annotations.runbook")
+                      type: string
+                    operator:
+                      allOf:
+                      - enum:
+                        - =
+                        - '!='
+                        - =~
+                        - '!~'
+                      - enum:
+                        - =
+                        - '!='
+                        - =~
+                        - '!~'
+                      description: |-
+                        Operator defines the Prometheus-style matching operator
+                        "=" for equality, "!=" for inequality, "=~" for regex match, "!~" for negative regex match
+                      type: string
+                    value:
+                      description: |-
+                        Value is the value to match against
+                        For regex operators (=~ and !~), this should be a valid regular expression
+                      type: string
+                  required:
+                  - name
+                  - operator
+                  - value
+                  type: object
+                type: array
               volumes:
                 description: |-
                   Volumes defines volumes that can be mounted by actions in this AlertReaction

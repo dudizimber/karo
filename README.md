@@ -539,12 +539,23 @@ curl http://alert-reaction-operator-webhook.default.svc.cluster.local:9090/healt
 
 ## Development
 
+### Prerequisites
+
+- Go 1.24+
+- Docker
+- kubectl
+- kind (for local testing)
+- make
+
 ### Building from Source
 
 ```bash
 # Clone the repository
 git clone https://github.com/dudizimber/k8s-alert-reaction-operator.git
 cd k8s-alert-reaction-operator
+
+# Set up development environment (including git hooks)
+./scripts/setup-hooks.sh
 
 # Build the operator
 make build
@@ -555,6 +566,25 @@ make test
 # Build Docker image
 make docker-build IMG=dudizimber/alert-reaction-operator:latest
 ```
+
+### Git Hooks
+
+This project uses git hooks to ensure code quality:
+
+```bash
+# Install git hooks (automatic formatting, linting, testing)
+./scripts/setup-hooks.sh
+
+# Test hooks installation
+./scripts/test-hooks.sh
+```
+
+The hooks will automatically:
+- **pre-commit**: Format code, basic linting, check for common issues
+- **pre-push**: Run full tests, generate manifests, comprehensive linting  
+- **commit-msg**: Validate conventional commit message format
+
+See [scripts/hooks/README.md](scripts/hooks/README.md) for detailed information.
 
 ### Running Locally
 
@@ -673,9 +703,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ### Code Guidelines
 
 - Follow Go best practices and formatting (`gofmt`, `golint`)
-- Add tests for new functionality
+- Add tests for new functionality  
 - Update documentation for API changes
 - Ensure CI/CD pipeline passes
+- Use [Conventional Commits](https://www.conventionalcommits.org/) format
+- Git hooks will automatically enforce formatting and linting
 
 ## Versioning
 
