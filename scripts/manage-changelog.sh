@@ -136,7 +136,7 @@ release_version() {
     version=${version#v}
     
     # Validate version format
-    if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+    if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
         print_error "Invalid version format: $version"
         return 1
     fi
