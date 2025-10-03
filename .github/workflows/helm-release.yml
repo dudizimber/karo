@@ -217,12 +217,22 @@ jobs:
       - name: Update Helm repository index
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          # Clone gh-pages branch for Helm repository
+          # Clone repository for gh-pages branch
           git clone https://github.com/${{ github.repository }}.git gh-pages-repo
           cd gh-pages-repo
           
+          # Configure git identity in the cloned repository
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          
           # Switch to gh-pages branch (create if it doesn't exist)
-          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            # Remove all files for orphan branch
+            git rm -rf . 2>/dev/null || true
+          fi
           
           # Clean up any existing content (keep .git)
           find . -maxdepth 1 ! -name '.git' ! -name '.' -exec rm -rf {} + 2>/dev/null || true
@@ -277,8 +287,13 @@ jobs:
           
           # Commit and push
           git add .
-          git commit -m "Update Helm repository for release ${{ github.ref_name }}" || echo "No changes to commit"
-          git push origin gh-pages
+          if git commit -m "Update Helm repository for release ${{ steps.version.outputs.RELEASE_TAG }}"; then
+            # Push to gh-pages branch (create if it doesn't exist)
+            git push origin gh-pages || git push -u origin gh-pages
+            echo "✅ Helm repository updated successfully"
+          else
+            echo "ℹ️ No changes to commit to Helm repository"
+          fi
 
       - name: Summary
         run: |
