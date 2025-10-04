@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Alert Reaction Operator Helm Repository</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    .code { background: #f4f4f4; padding: 10px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Alert Reaction Operator Helm Repository</h1>
+  <p>This is the official Helm repository for the Alert Reaction Operator.</p>
+  
+  <h2>Add Repository</h2>
+  <div class="code">
+    <code>helm repo add alert-reaction-operator https://dudizimber.github.io/k8s-alert-reaction-operator/</code><br>
+    <code>helm repo update</code>
+  </div>
+  
+  <h2>Install Chart</h2>
+  <div class="code">
+    <code>helm install my-operator alert-reaction-operator/alert-reaction-operator</code>
+  </div>
+  
+  <h2>Available Charts</h2>
+  <ul>
+    <li><a href="index.yaml">index.yaml</a> - Helm repository index</li>
+    <li><a href="alert-reaction-operator-0.0.1+8.tgz">alert-reaction-operator-0.0.1+8.tgz</a></li>
+  </ul>
+  
+  <p>For more information, visit the <a href="https://github.com/dudizimber/k8s-alert-reaction-operator">project repository</a>.</p>
+</body>
+</html>
