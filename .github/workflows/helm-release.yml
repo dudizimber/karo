@@ -214,28 +214,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Checkout gh-pages branch
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-repo
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Update Helm repository index
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          # Clone repository for gh-pages branch
-          git clone https://github.com/${{ github.repository }}.git gh-pages-repo
           cd gh-pages-repo
           
-          # Configure git identity in the cloned repository
+          # Configure git identity
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
           
-          # Switch to gh-pages branch (create if it doesn't exist)
-          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-            git checkout gh-pages
-          else
-            git checkout --orphan gh-pages
-            # Remove all files for orphan branch
-            git rm -rf . 2>/dev/null || true
-          fi
-          
-          # Clean up any existing content (keep .git)
-          find . -maxdepth 1 ! -name '.git' ! -name '.' -exec rm -rf {} + 2>/dev/null || true
+          # Clean up any existing content (keep .git and .github)
+          find . -maxdepth 1 ! -name '.git*' ! -name '.' -exec rm -rf {} + 2>/dev/null || true
           
           # Copy chart and index
           cp ../.helm-charts/*.tgz .
