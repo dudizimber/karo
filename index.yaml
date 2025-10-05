@@ -12,7 +12,7 @@ entries:
       artifacthub.io/containsSecurityUpdates: "false"
       artifacthub.io/images: |
         - name: alert-reaction-operator
-          image: ghcr.io/dudizimber/k8s-alert-reaction-operator:latest
+          image: docker.io/dudizimber/k8s-alert-reaction-operator:latest
       artifacthub.io/license: Apache-2.0
       artifacthub.io/links: |
         - name: Chart Source
@@ -28,11 +28,11 @@ entries:
       charts.openshift.io/supportURL: https://github.com/dudizimber/k8s-alert-reaction-operator/issues
       licenses: Apache-2.0
     apiVersion: v2
-    appVersion: 0.1.0
-    created: "2025-10-05T07:59:52.187230349Z"
+    appVersion: 0.1.1
+    created: "2025-10-05T10:36:07.926245949Z"
     description: A Kubernetes operator that creates Jobs in response to Prometheus
       alerts
-    digest: 0566ef78e8ee873396f7f8e2b770054dbd246e7a3a8becc89898d0c91f415cad
+    digest: efae634e0489afc68a253f4d410f1986a57458281ade6ccf960d185a3e2a7ce4
     home: https://github.com/dudizimber/k8s-alert-reaction-operator
     keywords:
     - kubernetes
@@ -56,6 +56,6 @@ entries:
     - https://github.com/dudizimber/k8s-alert-reaction-operator
     type: application
     urls:
-    - https://github.com/dudizimber/k8s-alert-reaction-operator/releases/download/v0.1.0/alert-reaction-operator-0.1.0.tgz
-    version: 0.1.0
-generated: "2025-10-05T07:59:52.186286194Z"
+    - https://github.com/dudizimber/k8s-alert-reaction-operator/releases/download/v0.1.1/alert-reaction-operator-0.1.1.tgz
+    version: 0.1.1
+generated: "2025-10-05T10:36:07.924099801Z"
