@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -240,17 +242,22 @@ func (r *AlertReactionReconciler) regexMatch(value, pattern string) bool {
 func (r *AlertReactionReconciler) createJobFromAction(ctx context.Context, alertReaction *alertreactionv1alpha1.AlertReaction, action alertreactionv1alpha1.Action, alertData map[string]interface{}) (*batchv1.Job, error) {
 	// Generate job name, limited to 63 chars, RFC 1123 compliant
 	baseName := fmt.Sprintf("%s-%s-%d", alertReaction.Name, action.Name, time.Now().Unix())
-	// Lowercase and replace invalid chars with '-'
-	if len(baseName) > 63 {
-		baseName = baseName[:63]
-	}
 	baseName = strings.ToLower(baseName)
 	baseName = regexp.MustCompile("[^a-z0-9.-]").ReplaceAllString(baseName, "-")
-	// Ensure starts/ends with alphanumeric
 	baseName = regexp.MustCompile("^[^a-z0-9]+").ReplaceAllString(baseName, "")
 	baseName = regexp.MustCompile("[^a-z0-9]+$").ReplaceAllString(baseName, "")
-	// Truncate to 63 chars
-	jobName := baseName
+
+	randomStr, err := generateRandomString(8)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate random string for job name: %w", err)
+	}
+
+	// Ensure jobName is <= 63 chars after appending random string
+	maxBaseLen := 63 - 1 - len(randomStr) // 1 for separator '-'
+	if len(baseName) > maxBaseLen {
+		baseName = baseName[:maxBaseLen]
+	}
+	jobName := fmt.Sprintf("%s-%s", baseName, randomStr)
 
 	// Process environment variables
 	env, err := r.processEnvVars(ctx, alertReaction.Namespace, action.Env, alertData)
@@ -565,4 +572,13 @@ func int32Ptr(i int32) *int32 {
 func parseQuantity(s string) resource.Quantity {
 	// Simple implementation - in production, use resource.ParseQuantity
 	return resource.MustParse(s)
+}
+
+func generateRandomString(length int) (string, error) {
+	buffer := make([]byte, length)
+	_, err := rand.Read(buffer)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(buffer)[:length], nil
 }
