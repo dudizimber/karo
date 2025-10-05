@@ -238,14 +238,19 @@ func (r *AlertReactionReconciler) regexMatch(value, pattern string) bool {
 }
 
 func (r *AlertReactionReconciler) createJobFromAction(ctx context.Context, alertReaction *alertreactionv1alpha1.AlertReaction, action alertreactionv1alpha1.Action, alertData map[string]interface{}) (*batchv1.Job, error) {
-	// Generate job name, limited to 63 chars (Kubernetes DNS label limit)
-	var jobName string
+	// Generate job name, limited to 63 chars, RFC 1123 compliant
 	baseName := fmt.Sprintf("%s-%s-%d", alertReaction.Name, action.Name, time.Now().Unix())
+	// Lowercase and replace invalid chars with '-'
+	baseName = strings.ToLower(baseName)
+	baseName = regexp.MustCompile("[^a-z0-9.-]").ReplaceAllString(baseName, "-")
+	// Ensure starts/ends with alphanumeric
+	baseName = regexp.MustCompile("^[^a-z0-9]+").ReplaceAllString(baseName, "")
+	baseName = regexp.MustCompile("[^a-z0-9]+$").ReplaceAllString(baseName, "")
+	// Truncate to 63 chars
 	if len(baseName) > 63 {
-		jobName = baseName[:63]
-	} else {
-		jobName = baseName
+		baseName = baseName[:63]
 	}
+	jobName := baseName
 
 	// Process environment variables
 	env, err := r.processEnvVars(ctx, alertReaction.Namespace, action.Env, alertData)
@@ -277,6 +282,20 @@ func (r *AlertReactionReconciler) createJobFromAction(ctx context.Context, alert
 	// Convert volume mounts
 	volumeMounts := r.convertVolumeMounts(action.VolumeMounts)
 
+	// Sanitize label values to match Kubernetes requirements: (([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?
+	sanitizeLabelValue := func(val string) string {
+		// Replace invalid characters with '-'
+		val = regexp.MustCompile(`[^A-Za-z0-9_.-]`).ReplaceAllString(val, "-")
+		// Ensure starts/ends with alphanumeric
+		val = regexp.MustCompile(`^[^A-Za-z0-9]+`).ReplaceAllString(val, "")
+		val = regexp.MustCompile(`[^A-Za-z0-9]+$`).ReplaceAllString(val, "")
+		// Truncate to 63 chars (Kubernetes label value max length)
+		if len(val) > 63 {
+			val = val[:63]
+		}
+		return val
+	}
+
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jobName,
@@ -284,9 +303,9 @@ func (r *AlertReactionReconciler) createJobFromAction(ctx context.Context, alert
 			Labels: map[string]string{
 				"app.kubernetes.io/name":      "alert-reaction-job",
 				"app.kubernetes.io/component": "job",
-				"alert-reaction/alert-name":   alertReaction.Spec.AlertName,
-				"alert-reaction/action-name":  action.Name,
-				"alert-reaction/owner":        alertReaction.Name,
+				"alert-reaction/alert-name":   sanitizeLabelValue(alertReaction.Spec.AlertName),
+				"alert-reaction/action-name":  sanitizeLabelValue(action.Name),
+				"alert-reaction/owner":        sanitizeLabelValue(alertReaction.Name),
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				{
