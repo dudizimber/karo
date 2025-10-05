@@ -241,15 +241,15 @@ func (r *AlertReactionReconciler) createJobFromAction(ctx context.Context, alert
 	// Generate job name, limited to 63 chars, RFC 1123 compliant
 	baseName := fmt.Sprintf("%s-%s-%d", alertReaction.Name, action.Name, time.Now().Unix())
 	// Lowercase and replace invalid chars with '-'
+	if len(baseName) > 63 {
+		baseName = baseName[:63]
+	}
 	baseName = strings.ToLower(baseName)
 	baseName = regexp.MustCompile("[^a-z0-9.-]").ReplaceAllString(baseName, "-")
 	// Ensure starts/ends with alphanumeric
 	baseName = regexp.MustCompile("^[^a-z0-9]+").ReplaceAllString(baseName, "")
 	baseName = regexp.MustCompile("[^a-z0-9]+$").ReplaceAllString(baseName, "")
 	// Truncate to 63 chars
-	if len(baseName) > 63 {
-		baseName = baseName[:63]
-	}
 	jobName := baseName
 
 	// Process environment variables
@@ -285,14 +285,14 @@ func (r *AlertReactionReconciler) createJobFromAction(ctx context.Context, alert
 	// Sanitize label values to match Kubernetes requirements: (([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?
 	sanitizeLabelValue := func(val string) string {
 		// Replace invalid characters with '-'
+		if len(val) > 63 {
+			val = val[:63]
+		}
 		val = regexp.MustCompile(`[^A-Za-z0-9_.-]`).ReplaceAllString(val, "-")
 		// Ensure starts/ends with alphanumeric
 		val = regexp.MustCompile(`^[^A-Za-z0-9]+`).ReplaceAllString(val, "")
 		val = regexp.MustCompile(`[^A-Za-z0-9]+$`).ReplaceAllString(val, "")
 		// Truncate to 63 chars (Kubernetes label value max length)
-		if len(val) > 63 {
-			val = val[:63]
-		}
 		return val
 	}
 
