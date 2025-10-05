@@ -6,6 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_REPOSITORY: dudizimber
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -72,7 +73,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
+          username: ${{ env.IMAGE_REPOSITORY }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Chart.yaml
