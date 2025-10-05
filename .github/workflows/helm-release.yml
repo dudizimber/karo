@@ -37,16 +37,20 @@ jobs:
         id: version
         run: |
           # Get version from release tag name
-          VERSION="${{ github.event.release.tag_name }}"
-          VERSION=${VERSION#v}  # Remove 'v' prefix if present
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          VERSION=${RELEASE_TAG#v}  # Remove 'v' prefix for Docker image compatibility
+          
+          # Use the full tag (with 'v') for Helm chart version and appVersion
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "CHART_VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "APP_VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "RELEASE_TAG=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "CHART_VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_OUTPUT
           echo "IS_PRERELEASE=${{ github.event.release.prerelease }}" >> $GITHUB_OUTPUT
           
-          echo "Release version: $VERSION"
-          echo "Release tag: ${{ github.event.release.tag_name }}"
+          echo "Release version (no v): $VERSION"
+          echo "Chart version (with v): $RELEASE_TAG" 
+          echo "App version (with v): $RELEASE_TAG"
+          echo "Release tag: $RELEASE_TAG"
           echo "Is prerelease: ${{ github.event.release.prerelease }}"
 
       - name: Process CHANGELOG for chart
