@@ -1,0 +1,118 @@
+apiVersion: alertreaction.io/v1alpha1
+kind: AlertReaction
+metadata:
+  name: optional-command-example
+  namespace: default
+spec:
+  alertName: DatabaseConnectionError
+  actions:
+  # Example 1: Using image with default entrypoint (no command specified)
+  - name: health-check-with-entrypoint
+    image: curlimages/curl:latest
+    # No command specified - will use curl's default entrypoint
+    args:
+    - "-f"
+    - "http://database:5432/health"
+    env:
+    - name: DATABASE_URL
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.database_url"
+    
+  # Example 2: Custom application image with built-in entrypoint
+  - name: database-diagnostic
+    image: myregistry/db-diagnostic-tool:v1.0.0
+    # No command specified - uses the application's default entrypoint
+    env:
+    - name: DB_HOST
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.instance"
+    - name: ALERT_SEVERITY
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.severity"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "32Mi"
+      limits:
+        cpu: "100m"
+        memory: "64Mi"
+        
+  # Example 3: Mixed approach - one action with command, one without
+  - name: notify-with-webhook
+    image: webhook-notifier:latest
+    # Uses image's default webhook notification logic
+    env:
+    - name: WEBHOOK_URL
+      valueFrom:
+        secretKeyRef:
+          name: notification-secrets
+          key: webhook-url
+    - name: MESSAGE
+      value: "Database connection error detected"
+    - name: ALERT_INSTANCE
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.instance"
+          
+  # Example 4: Traditional approach with explicit command for comparison
+  - name: manual-restart-with-command
+    image: bitnami/kubectl:latest
+    command: ["kubectl"]
+    args:
+    - "rollout"
+    - "restart"
+    - "deployment/database"
+    - "-n"
+    - "production"
+---
+apiVersion: alertreaction.io/v1alpha1
+kind: AlertReaction
+metadata:
+  name: monitoring-tool-reaction
+  namespace: monitoring
+spec:
+  alertName: ServiceDown
+  matchers:
+  - name: service
+    operator: "="
+    value: "frontend"
+  actions:
+  # Example: Using a specialized monitoring tool image
+  - name: run-diagnostics
+    image: monitoring/service-diagnostics:v2.1.0
+    # This image has a built-in entrypoint that runs comprehensive diagnostics
+    # No command needed - the tool knows what to do
+    env:
+    - name: SERVICE_NAME
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.service"
+    - name: ENVIRONMENT
+      valueFrom:
+        alertRef:
+          fieldPath: "labels.environment"
+    - name: ALERT_TIMESTAMP
+      valueFrom:
+        alertRef:
+          fieldPath: "startsAt"
+  
+  # Example: Custom notification service
+  - name: escalate-alert
+    image: company/alert-escalator:latest
+    # Built-in escalation logic based on environment variables
+    env:
+    - name: ESCALATION_LEVEL
+      value: "2"
+    - name: SERVICE_OWNER
+      valueFrom:
+        configMapKeyRef:
+          name: service-ownership
+          key: frontend-owner
+    - name: ON_CALL_CHANNEL
+      valueFrom:
+        secretKeyRef:
+          name: oncall-config
+          key: slack-channel

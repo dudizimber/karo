@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -396,6 +397,15 @@ func (r *AlertReactionReconciler) resolveEnvVarSource(ctx context.Context, names
 func (r *AlertReactionReconciler) getAlertFieldValue(alertData map[string]interface{}, fieldPath string) (string, error) {
 	// Simple field path resolution (can be enhanced for nested paths)
 	// Supports: "labels.instance", "annotations.summary", "status", etc.
+
+	if fieldPath == "" || fieldPath == "." {
+		// Return the full alertData object as a JSON string
+		bytes, err := json.Marshal(alertData)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal alertData: %w", err)
+		}
+		return string(bytes), nil
+	}
 
 	value, exists := alertData[fieldPath]
 	if !exists {

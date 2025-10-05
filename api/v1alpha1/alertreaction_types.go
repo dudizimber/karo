@@ -96,9 +96,9 @@ type Action struct {
 	// +kubebuilder:validation:Required
 	Image string `json:"image"`
 
-	// Command to execute in the container
-	// +kubebuilder:validation:Required
-	Command []string `json:"command"`
+	// Command to execute in the container (optional)
+	// If not specified, the image's default entrypoint/command will be used
+	Command []string `json:"command,omitempty"`
 
 	// Args for the command (optional)
 	Args []string `json:"args,omitempty"`

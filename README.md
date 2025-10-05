@@ -173,7 +173,7 @@ spec:
   actions:                      # List of actions to execute
   - name: "action-name"         # Unique name for this action
     image: "image:tag"          # Container image to run
-    command: ["cmd"]            # Command to execute
+    command: ["cmd"]            # Command to execute (optional - uses image's default if not specified)
     args: ["arg1", "arg2"]      # Arguments (optional)
     serviceAccount: "action-service-account"  # Optional: Service account for this action
     env:                        # Environment variables (optional)
@@ -186,6 +186,15 @@ spec:
     - name: "storage-volume"
       mountPath: "/data"
 ```
+
+> **💡 Tip: Optional Command Field**
+> 
+> The `command` field is optional. If not specified, the container will use the image's default `ENTRYPOINT` and `CMD`. This is particularly useful when:
+> - Using specialized monitoring or diagnostic tools with built-in entrypoints
+> - Working with custom application images that have embedded logic
+> - Simplifying configurations for images that are designed to be run without explicit commands
+>
+> See `examples/optional-command-example.yaml` for practical examples.
 
 ### Environment Variable Substitution
 

@@ -68,7 +68,9 @@ spec:
                         type: string
                       type: array
                     command:
-                      description: Command to execute in the container
+                      description: |-
+                        Command to execute in the container (optional)
+                        If not specified, the image's default entrypoint/command will be used
                       items:
                         type: string
                       type: array
@@ -194,7 +196,6 @@ spec:
                         type: object
                       type: array
                   required:
-                  - command
                   - image
                   - name
                   type: object
