@@ -5,7 +5,7 @@ on:
     types: [published]
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: docker.io
   IMAGE_REPOSITORY: dudizimber
   IMAGE_NAME: ${{ github.repository }}
 
