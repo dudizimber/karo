@@ -3,6 +3,22 @@ name: Helm Chart Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build Helm chart for (e.g., v1.0.0)'
+        required: true
+        type: string
+      overwrite:
+        description: 'Overwrite existing chart version if it already exists'
+        required: true
+        type: boolean
+        default: false
+      skip_gh_pages:
+        description: 'Skip updating gh-pages branch'
+        required: false
+        type: boolean
+        default: false
 
 env:
   DOCKER_REGISTRY: docker.io
@@ -37,8 +53,18 @@ jobs:
       - name: Extract version from release
         id: version
         run: |
-          # Get version from release tag name
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual dispatch - use input tag
+            RELEASE_TAG="${{ github.event.inputs.tag }}"
+            IS_PRERELEASE="false"
+            echo "Manual dispatch triggered for tag: $RELEASE_TAG"
+          else
+            # Automatic release - use release tag
+            RELEASE_TAG="${{ github.event.release.tag_name }}"
+            IS_PRERELEASE="${{ github.event.release.prerelease }}"
+            echo "Automatic release triggered for tag: $RELEASE_TAG"
+          fi
+          
           VERSION=${RELEASE_TAG#v}  # Remove 'v' prefix for Docker image compatibility
           
           # Use the full tag (with 'v') for Helm chart version and appVersion
@@ -46,13 +72,17 @@ jobs:
           echo "CHART_VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
           echo "APP_VERSION=$RELEASE_TAG" >> $GITHUB_OUTPUT
           echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_OUTPUT
-          echo "IS_PRERELEASE=${{ github.event.release.prerelease }}" >> $GITHUB_OUTPUT
+          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+          echo "IS_MANUAL_DISPATCH=${{ github.event_name == 'workflow_dispatch' }}" >> $GITHUB_OUTPUT
+          echo "OVERWRITE_ENABLED=${{ github.event.inputs.overwrite }}" >> $GITHUB_OUTPUT
           
           echo "Release version (no v): $VERSION"
           echo "Chart version (with v): $RELEASE_TAG" 
           echo "App version (with v): $RELEASE_TAG"
           echo "Release tag: $RELEASE_TAG"
-          echo "Is prerelease: ${{ github.event.release.prerelease }}"
+          echo "Is prerelease: $IS_PRERELEASE"
+          echo "Manual dispatch: ${{ github.event_name == 'workflow_dispatch' }}"
+          echo "Overwrite enabled: ${{ github.event.inputs.overwrite }}"
 
       - name: Process CHANGELOG for chart
         id: changelog
@@ -134,6 +164,13 @@ jobs:
       - name: Push Helm chart to OCI registry
         run: |
           # Push to GitHub Container Registry as OCI artifact
+          if [ "${{ steps.version.outputs.IS_MANUAL_DISPATCH }}" = "true" ] && [ "${{ steps.version.outputs.OVERWRITE_ENABLED }}" = "true" ]; then
+            echo "Manual dispatch with overwrite enabled - forcing push"
+            # Note: Helm doesn't have a --force flag, but we can delete and push
+            # This will fail silently if the chart doesn't exist
+            helm delete --namespace ghcr oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator:${{ steps.version.outputs.CHART_VERSION }} 2>/dev/null || true
+          fi
+          
           helm push .helm-charts/alert-reaction-operator-${{ steps.version.outputs.CHART_VERSION }}.tgz oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts
 
       - name: Generate release notes
@@ -194,6 +231,7 @@ jobs:
           EOF
 
       - name: Update GitHub Release with Helm chart info
+        if: ${{ steps.version.outputs.IS_MANUAL_DISPATCH != 'true' }}
         run: |
           # Update the existing release with Helm chart information
           RELEASE_TAG="${{ steps.version.outputs.RELEASE_TAG }}"
@@ -220,8 +258,34 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create GitHub Release for Manual Dispatch
+        if: ${{ steps.version.outputs.IS_MANUAL_DISPATCH == 'true' }}
+        run: |
+          # For manual dispatch, check if release exists and update/create accordingly
+          RELEASE_TAG="${{ steps.version.outputs.RELEASE_TAG }}"
+          
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG exists, uploading Helm chart files"
+            # Upload Helm chart files to the existing release
+            gh release upload "$RELEASE_TAG" \
+              .helm-charts/*.tgz \
+              .helm-charts/index.yaml \
+              --clobber
+          else
+            echo "Release $RELEASE_TAG does not exist, creating new release"
+            # Create new release with Helm chart info
+            gh release create "$RELEASE_TAG" \
+              --title "Release $RELEASE_TAG (Manual Helm Chart)" \
+              --notes-file release_notes.md \
+              --draft \
+              .helm-charts/*.tgz \
+              .helm-charts/index.yaml
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Checkout gh-pages branch
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        if: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') && github.event.inputs.skip_gh_pages != 'true' }}
         uses: actions/checkout@v4
         with:
           ref: gh-pages
@@ -230,7 +294,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Helm repository index
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        if: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') && github.event.inputs.skip_gh_pages != 'true' }}
         run: |
           cd gh-pages-repo
           
@@ -306,6 +370,11 @@ jobs:
           echo "### 📦 Chart Details" >> $GITHUB_STEP_SUMMARY
           echo "- **Chart Version**: ${{ steps.version.outputs.CHART_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "- **App Version**: ${{ steps.version.outputs.APP_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name == 'workflow_dispatch' && 'Manual Dispatch' || 'Automatic Release' }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.version.outputs.IS_MANUAL_DISPATCH }}" = "true" ]; then
+            echo "- **Overwrite**: ${{ steps.version.outputs.OVERWRITE_ENABLED }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Skip gh-pages**: ${{ github.event.inputs.skip_gh_pages }}" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "- **OCI Registry**: \`oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🚀 Installation Commands" >> $GITHUB_STEP_SUMMARY
