@@ -79,7 +79,7 @@ jobs:
         with:
           registry: ${{ env.HELM_REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.DOCKER_PAT }}
 
       - name: Update Chart.yaml
         run: |
