@@ -73,7 +73,7 @@ kubectl apply -f https://raw.githubusercontent.com/dudizimber/k8s-alert-reaction
 ```yaml
 # values.yaml
 image:
-  repository: ghcr.io/dudizimber/k8s-alert-reaction-operator
+  repository: docker.io/dudizimber/k8s-alert-reaction-operator
   tag: "0.1.0"
   pullPolicy: IfNotPresent
 
@@ -157,7 +157,7 @@ affinity:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `image.repository` | Container image repository | `ghcr.io/dudizimber/k8s-alert-reaction-operator` |
+| `image.repository` | Container image repository | `docker.io/dudizimber/k8s-alert-reaction-operator` |
 | `image.tag` | Container image tag | `"latest"` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |
 | `imagePullSecrets` | Image pull secrets | `[]` |

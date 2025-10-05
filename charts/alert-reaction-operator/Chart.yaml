@@ -50,7 +50,7 @@ annotations:
   artifacthub.io/prerelease: "false"
   artifacthub.io/images: |
     - name: alert-reaction-operator
-      image: ghcr.io/dudizimber/k8s-alert-reaction-operator:latest
+      image: docker.io/dudizimber/k8s-alert-reaction-operator:latest
   artifacthub.io/links: |
     - name: Chart Source
       url: https://github.com/dudizimber/k8s-alert-reaction-operator/tree/main/charts/alert-reaction-operator

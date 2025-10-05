@@ -1,0 +1,193 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker image tag (leave empty to use latest commit SHA)'
+        required: false
+        type: string
+      push_to_registry:
+        description: 'Push to registry'
+        required: true
+        type: boolean
+        default: true
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tags: ${{ steps.meta.outputs.tags }}
+      image-tag: ${{ steps.tag.outputs.tag }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine image tag
+        id: tag
+        run: |
+          # Check if we're on a tag ref (works for both push and workflow_dispatch)
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            # Extract tag name from ref
+            TAG=${GITHUB_REF#refs/tags/}
+            # Remove 'v' prefix if present for Docker tag
+            DOCKER_TAG=${TAG#v}
+            echo "tag=$DOCKER_TAG" >> $GITHUB_OUTPUT
+            echo "original-tag=$TAG" >> $GITHUB_OUTPUT
+            echo "Tag ref detected. Original tag: $TAG, Docker tag: $DOCKER_TAG"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag }}" ]; then
+            # Manual trigger with custom tag input
+            TAG="${{ github.event.inputs.tag }}"
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "Manual trigger with custom tag: $TAG"
+          else
+            # Fallback to SHA for manual triggers without tag
+            TAG="sha-${GITHUB_SHA::8}"
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "Fallback to SHA tag: $TAG"
+          fi
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Primary tag - use our determined tag
+            type=raw,value=${{ steps.tag.outputs.tag }}
+            # For tag refs, also create semantic version tags
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=semver,pattern={{major}},enable=${{ startsWith(github.ref, 'refs/tags/') && !contains(steps.tag.outputs.tag, '-') }}
+            # Latest tag for stable releases (no pre-release identifiers)
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') && !contains(steps.tag.outputs.tag, '-') && !contains(steps.tag.outputs.tag, '+') }}
+          labels: |
+            org.opencontainers.image.title=Alert Reaction Operator
+            org.opencontainers.image.description=Kubernetes operator that automatically executes Jobs in response to Prometheus alerts
+            org.opencontainers.image.vendor=${{ github.repository_owner }}
+            org.opencontainers.image.version=${{ steps.tag.outputs.tag }}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event.inputs.push_to_registry != 'false' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.tag.outputs.tag }}
+            COMMIT=${{ github.sha }}
+            DATE=${{ github.event.head_commit.timestamp }}
+
+      - name: Generate SBOM
+        if: ${{ github.event.inputs.push_to_registry != 'false' }}
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM as artifact
+        if: ${{ github.event.inputs.push_to_registry != 'false' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ steps.tag.outputs.tag }}
+          path: sbom.spdx.json
+
+      - name: Image Summary
+        run: |
+          echo "## Docker Image Built Successfully! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Details:**" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "push" ] && [ -n "${{ steps.tag.outputs.original-tag }}" ]; then
+            echo "- **Git Tag:** \`${{ steps.tag.outputs.original-tag }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Docker Tag:** \`${{ steps.tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**All Generated Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pull Commands:**" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Primary tag" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# By digest (immutable)" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  security-scan:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: ${{ github.event.inputs.push_to_registry != 'false' }}
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build-and-push.outputs.image-digest }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Trivy for JSON report
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build-and-push.outputs.image-digest }}
+          format: 'json'
+          output: 'trivy-report.json'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+
+      - name: Upload Trivy report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-security-report-${{ needs.build-and-push.outputs.image-tag }}
+          path: |
+            trivy-results.sarif
+            trivy-report.json
