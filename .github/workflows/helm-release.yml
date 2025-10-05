@@ -5,7 +5,8 @@ on:
     types: [published]
 
 env:
-  REGISTRY: docker.io
+  DOCKER_REGISTRY: docker.io
+  HELM_REGISTRY: ghcr.io
   IMAGE_REPOSITORY: dudizimber
   IMAGE_NAME: ${{ github.repository }}
 
@@ -76,8 +77,8 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ env.IMAGE_REPOSITORY }}
+          registry: ${{ env.HELM_REGISTRY }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Chart.yaml
@@ -93,9 +94,9 @@ jobs:
 
       - name: Update values.yaml with correct image
         run: |
-          # Update the default image in values.yaml
-          sed -i "s|repository: .*|repository: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}|" charts/alert-reaction-operator/values.yaml
-          sed -i "s|tag: .*|tag: \"${{ steps.version.outputs.APP_VERSION }}\"|" charts/alert-reaction-operator/values.yaml
+          # Update the default image in values.yaml to use Docker Hub
+          sed -i "s|repository: .*|repository: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/k8s-alert-reaction-operator|" charts/alert-reaction-operator/values.yaml
+          sed -i "s|tag: .*|tag: \"${{ steps.version.outputs.VERSION }}\"|" charts/alert-reaction-operator/values.yaml
 
       - name: Bundle CRDs with chart
         run: |
@@ -133,7 +134,7 @@ jobs:
       - name: Push Helm chart to OCI registry
         run: |
           # Push to GitHub Container Registry as OCI artifact
-          helm push .helm-charts/alert-reaction-operator-${{ steps.version.outputs.CHART_VERSION }}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
+          helm push .helm-charts/alert-reaction-operator-${{ steps.version.outputs.CHART_VERSION }}.tgz oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts
 
       - name: Generate release notes
         id: release_notes
@@ -163,10 +164,10 @@ jobs:
           #### Install from OCI Registry (Recommended)
           \`\`\`bash
           # Install directly from GitHub Container Registry
-          helm install alert-reaction-operator oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}
+          helm install alert-reaction-operator oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}
           
           # Or with custom values
-          helm install alert-reaction-operator oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }} -f values.yaml
+          helm install alert-reaction-operator oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }} -f values.yaml
           \`\`\`
           
           #### Install from Release Assets
@@ -179,11 +180,11 @@ jobs:
           ### Upgrade
           \`\`\`bash
           # Upgrade from OCI registry
-          helm upgrade alert-reaction-operator oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}
+          helm upgrade alert-reaction-operator oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}
           \`\`\`
           
           ### Container Images
-          - **Operator Image**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.APP_VERSION }}\`
+          - **Operator Image**: \`${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/k8s-alert-reaction-operator:${{ steps.version.outputs.VERSION }}\`
           
           ### Chart Details
           - **Chart Version**: ${{ steps.version.outputs.CHART_VERSION }}
@@ -305,12 +306,12 @@ jobs:
           echo "### 📦 Chart Details" >> $GITHUB_STEP_SUMMARY
           echo "- **Chart Version**: ${{ steps.version.outputs.CHART_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "- **App Version**: ${{ steps.version.outputs.APP_VERSION }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **OCI Registry**: \`oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **OCI Registry**: \`oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🚀 Installation Commands" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "# From OCI Registry" >> $GITHUB_STEP_SUMMARY
-          echo "helm install alert-reaction-operator oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "helm install alert-reaction-operator oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# From Helm Repository" >> $GITHUB_STEP_SUMMARY
           echo "helm repo add alert-reaction-operator https://${{ github.repository_owner }}.github.io/k8s-alert-reaction-operator/" >> $GITHUB_STEP_SUMMARY
