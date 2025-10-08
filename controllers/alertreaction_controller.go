@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -575,10 +574,17 @@ func parseQuantity(s string) resource.Quantity {
 }
 
 func generateRandomString(length int) (string, error) {
+	// Use only lowercase alphanumeric characters for Kubernetes DNS-1123 compatibility
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
 	buffer := make([]byte, length)
 	_, err := rand.Read(buffer)
 	if err != nil {
 		return "", err
 	}
-	return base64.URLEncoding.EncodeToString(buffer)[:length], nil
+
+	result := make([]byte, length)
+	for i := 0; i < length; i++ {
+		result[i] = charset[buffer[i]%byte(len(charset))]
+	}
+	return string(result), nil
 }

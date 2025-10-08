@@ -696,7 +696,7 @@ func TestCreateJobFromAction_JobNameGeneration(t *testing.T) {
 			name:              "Normal names",
 			alertReactionName: "high-cpu-alert",
 			actionName:        "notify-slack",
-			expectedPattern:   `^high-cpu-alert-notify-slack-\d+-[A-Za-z0-9_-]{8}$`,
+			expectedPattern:   `^high-cpu-alert-notify-slack-\d+-[a-z0-9]{8}$`,
 			shouldBeValidName: true,
 			maxLength:         63,
 		},
@@ -704,7 +704,7 @@ func TestCreateJobFromAction_JobNameGeneration(t *testing.T) {
 			name:              "Names with uppercase and special chars",
 			alertReactionName: "Database_Connection_Error",
 			actionName:        "Send@Email!Alert",
-			expectedPattern:   `^database-connection-error-send-email-alert-\d+-[A-Za-z0-9_-]{8}$`,
+			expectedPattern:   `^database-connection-error-send-email-alert-\d+-[a-z0-9]{8}$`,
 			shouldBeValidName: true,
 			maxLength:         63,
 		},
@@ -712,7 +712,7 @@ func TestCreateJobFromAction_JobNameGeneration(t *testing.T) {
 			name:              "Very long names",
 			alertReactionName: "very-long-alert-reaction-name-that-exceeds-normal-limits",
 			actionName:        "very-long-action-name-that-also-exceeds-limits",
-			expectedPattern:   `^[a-z0-9.-]+-[A-Za-z0-9_-]{8}$`,
+			expectedPattern:   `^[a-z0-9.-]+-[a-z0-9]{8}$`,
 			shouldBeValidName: true,
 			maxLength:         63,
 		},
@@ -720,7 +720,7 @@ func TestCreateJobFromAction_JobNameGeneration(t *testing.T) {
 			name:              "Names starting with special chars",
 			alertReactionName: "123-alert",
 			actionName:        "456-action",
-			expectedPattern:   `^123-alert-456-action-\d+-[A-Za-z0-9_-]{8}$`,
+			expectedPattern:   `^123-alert-456-action-\d+-[a-z0-9]{8}$`,
 			shouldBeValidName: true,
 			maxLength:         63,
 		},
@@ -728,7 +728,7 @@ func TestCreateJobFromAction_JobNameGeneration(t *testing.T) {
 			name:              "Names ending with special chars",
 			alertReactionName: "alert-123",
 			actionName:        "action-456",
-			expectedPattern:   `^alert-123-action-456-\d+-[A-Za-z0-9_-]{8}$`,
+			expectedPattern:   `^alert-123-action-456-\d+-[a-z0-9]{8}$`,
 			shouldBeValidName: true,
 			maxLength:         63,
 		},
@@ -1076,14 +1076,16 @@ func TestCreateJobFromAction_OptionalCommand(t *testing.T) {
 
 // Helper functions for validation
 
-// isValidKubernetesName checks if a string is a valid Kubernetes resource name
+// isValidKubernetesName checks if a string is a valid Kubernetes resource name (DNS-1123 subdomain)
 func isValidKubernetesName(s string) bool {
 	if len(s) == 0 || len(s) > 63 {
 		return false
 	}
-	// Must start and end with alphanumeric, contain alphanumeric, dash, underscore, or dot
-	// This is more lenient than DNS labels to account for base64 encoding
-	pattern := regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
+	// Kubernetes resource names must be valid DNS-1123 subdomains:
+	// - contain only lowercase alphanumeric characters or hyphens
+	// - start with an alphanumeric character
+	// - end with an alphanumeric character
+	pattern := regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
 	return pattern.MatchString(s)
 }
 
