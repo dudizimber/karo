@@ -292,7 +292,7 @@ jobs:
             [skip ci]"
             
             # Push to main branch
-            git push origin main
+            git push --force origin main
             
             # Get the commit hash for cherry-picking
             CHANGELOG_COMMIT=$(git rev-parse HEAD)
