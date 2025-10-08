@@ -305,7 +305,7 @@ jobs:
             echo "Cherry-picking changelog commit to release branch..."
             if git cherry-pick "$CHANGELOG_COMMIT"; then
               echo "Successfully cherry-picked changelog commit to $RELEASE_BRANCH"
-              git push origin "$RELEASE_BRANCH"
+              git push --force origin "$RELEASE_BRANCH"
             else
               echo "Cherry-pick failed, attempting manual merge..."
               
@@ -319,7 +319,7 @@ jobs:
               - Add placeholder for next unreleased changes
               
               [skip ci]"
-              git push origin "$RELEASE_BRANCH"
+              git push --force origin "$RELEASE_BRANCH"
               
               echo "Manually applied changelog updates to $RELEASE_BRANCH"
             fi
