@@ -255,6 +255,80 @@ jobs:
           sha256sum *.tar.gz > checksums.txt
           cd ..
 
+      - name: Commit CHANGELOG updates
+        if: github.event_name == 'push' && startsWith(github.ref_name, 'release/')
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          RELEASE_BRANCH="${{ github.ref_name }}"
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are CHANGELOG updates to commit
+          if [[ -n "$(git status --porcelain CHANGELOG.md)" ]]; then
+            echo "CHANGELOG updates detected, committing to main branch first..."
+            
+            # Stash any other changes (keep only CHANGELOG.md)
+            git add CHANGELOG.md
+            git stash push -u -m "Temporary stash for changelog updates"
+            
+            # Switch to main branch and pull latest
+            git fetch origin main
+            git checkout main
+            git pull origin main
+            
+            # Apply the CHANGELOG changes to main
+            git stash pop
+            git add CHANGELOG.md
+            
+            # Create and commit changes to main
+            git commit -m "docs: update CHANGELOG for ${VERSION}
+            
+            - Prepare release notes for ${VERSION}
+            - Move unreleased changes to version section
+            - Add placeholder for next unreleased changes
+            
+            [skip ci]"
+            
+            # Push to main branch
+            git push origin main
+            
+            # Get the commit hash for cherry-picking
+            CHANGELOG_COMMIT=$(git rev-parse HEAD)
+            echo "CHANGELOG commit on main: $CHANGELOG_COMMIT"
+            
+            # Switch back to release branch
+            git checkout "$RELEASE_BRANCH"
+            
+            # Cherry-pick the changelog commit to release branch
+            echo "Cherry-picking changelog commit to release branch..."
+            if git cherry-pick "$CHANGELOG_COMMIT"; then
+              echo "Successfully cherry-picked changelog commit to $RELEASE_BRANCH"
+              git push origin "$RELEASE_BRANCH"
+            else
+              echo "Cherry-pick failed, attempting manual merge..."
+              
+              # If cherry-pick fails, try to merge manually
+              git checkout main -- CHANGELOG.md
+              git add CHANGELOG.md
+              git commit -m "docs: update CHANGELOG for ${VERSION} (manual merge)
+              
+              - Prepare release notes for ${VERSION}
+              - Move unreleased changes to version section
+              - Add placeholder for next unreleased changes
+              
+              [skip ci]"
+              git push origin "$RELEASE_BRANCH"
+              
+              echo "Manually applied changelog updates to $RELEASE_BRANCH"
+            fi
+            
+            echo "CHANGELOG updates committed to both main and $RELEASE_BRANCH"
+          else
+            echo "No CHANGELOG updates detected"
+          fi
+
       - name: Create draft release
         run: |
           VERSION="${{ steps.version.outputs.version }}"
@@ -279,31 +353,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit CHANGELOG updates
-        if: github.event_name == 'push' && startsWith(github.ref_name, 'release/')
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          
-          # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Commit CHANGELOG updates
-          if [[ -n "$(git status --porcelain CHANGELOG.md)" ]]; then
-            git add CHANGELOG.md
-            git commit -m "docs: update CHANGELOG for $VERSION
-            
-            - Prepare release notes for $VERSION
-            - Move unreleased changes to version section
-            - Add placeholder for next unreleased changes
-            
-            [skip ci]"
-            git push origin "${{ github.ref_name }}"
-          fi
-
       - name: Summary
         run: |
           VERSION="${{ steps.version.outputs.version }}"
+          RELEASE_BRANCH="${{ github.ref_name }}"
           echo "## 📋 Draft Release Created!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🏷️ Version: $VERSION" >> $GITHUB_STEP_SUMMARY
@@ -313,6 +366,12 @@ jobs:
           echo "1. Review the draft release notes and artifacts" >> $GITHUB_STEP_SUMMARY
           echo "2. Test the release artifacts if needed" >> $GITHUB_STEP_SUMMARY
           echo "3. **Publish the release** to trigger Helm chart automation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 CHANGELOG Updates:" >> $GITHUB_STEP_SUMMARY
+          echo "- CHANGELOG has been updated and committed to **main** branch" >> $GITHUB_STEP_SUMMARY
+          echo "- Changes have been cherry-picked to **$RELEASE_BRANCH** branch" >> $GITHUB_STEP_SUMMARY
+          echo "- Draft release created from the updated release branch with changelog" >> $GITHUB_STEP_SUMMARY
+          echo "- Both branches now contain the updated release notes" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ⚠️ Important:" >> $GITHUB_STEP_SUMMARY
           echo "- The Helm chart will only be released when you **publish** the draft release" >> $GITHUB_STEP_SUMMARY
