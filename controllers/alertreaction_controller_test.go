@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -677,6 +678,426 @@ func TestConvertVolumeMounts(t *testing.T) {
 	}
 
 	t.Log("Volume mount conversion test passed")
+}
+
+func TestCreateJobFromAction_JobNameGeneration(t *testing.T) {
+	reconciler, _ := setupTestEmpty()
+	ctx := context.Background()
+
+	tests := []struct {
+		name              string
+		alertReactionName string
+		actionName        string
+		expectedPattern   string
+		shouldBeValidName bool
+		maxLength         int
+	}{
+		{
+			name:              "Normal names",
+			alertReactionName: "high-cpu-alert",
+			actionName:        "notify-slack",
+			expectedPattern:   `^high-cpu-alert-notify-slack-\d+-[A-Za-z0-9_-]{8}$`,
+			shouldBeValidName: true,
+			maxLength:         63,
+		},
+		{
+			name:              "Names with uppercase and special chars",
+			alertReactionName: "Database_Connection_Error",
+			actionName:        "Send@Email!Alert",
+			expectedPattern:   `^database-connection-error-send-email-alert-\d+-[A-Za-z0-9_-]{8}$`,
+			shouldBeValidName: true,
+			maxLength:         63,
+		},
+		{
+			name:              "Very long names",
+			alertReactionName: "very-long-alert-reaction-name-that-exceeds-normal-limits",
+			actionName:        "very-long-action-name-that-also-exceeds-limits",
+			expectedPattern:   `^[a-z0-9.-]+-[A-Za-z0-9_-]{8}$`,
+			shouldBeValidName: true,
+			maxLength:         63,
+		},
+		{
+			name:              "Names starting with special chars",
+			alertReactionName: "123-alert",
+			actionName:        "456-action",
+			expectedPattern:   `^123-alert-456-action-\d+-[A-Za-z0-9_-]{8}$`,
+			shouldBeValidName: true,
+			maxLength:         63,
+		},
+		{
+			name:              "Names ending with special chars",
+			alertReactionName: "alert-123",
+			actionName:        "action-456",
+			expectedPattern:   `^alert-123-action-456-\d+-[A-Za-z0-9_-]{8}$`,
+			shouldBeValidName: true,
+			maxLength:         63,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create AlertReaction
+			alertReaction := &alertreactionv1alpha1.AlertReaction{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tt.alertReactionName,
+					Namespace: "default",
+					UID:       types.UID("test-uid"),
+				},
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "alertreaction.io/v1alpha1",
+					Kind:       "AlertReaction",
+				},
+				Spec: alertreactionv1alpha1.AlertReactionSpec{
+					AlertName: "TestAlert",
+					Actions: []alertreactionv1alpha1.Action{
+						{
+							Name:  tt.actionName,
+							Image: "test:latest",
+						},
+					},
+				},
+			}
+
+			action := alertReaction.Spec.Actions[0]
+			alertData := map[string]interface{}{
+				"labels": map[string]interface{}{
+					"severity": "critical",
+				},
+			}
+
+			// Call the method
+			job, err := reconciler.createJobFromAction(ctx, alertReaction, action, alertData)
+			if err != nil {
+				t.Fatalf("createJobFromAction failed: %v", err)
+			}
+
+			// Test job name
+			if len(job.Name) > tt.maxLength {
+				t.Errorf("Job name length %d exceeds maximum %d: %s", len(job.Name), tt.maxLength, job.Name)
+			}
+
+			if tt.shouldBeValidName && !isValidKubernetesName(job.Name) {
+				t.Errorf("Job name is not a valid Kubernetes name: %s", job.Name)
+			}
+
+			if matched, _ := regexp.MatchString(tt.expectedPattern, job.Name); !matched {
+				t.Errorf("Job name %s does not match expected pattern %s", job.Name, tt.expectedPattern)
+			}
+
+			// Test that job name is unique by generating multiple jobs
+			jobNames := make(map[string]bool)
+			for i := 0; i < 10; i++ {
+				job2, err := reconciler.createJobFromAction(ctx, alertReaction, action, alertData)
+				if err != nil {
+					t.Fatalf("createJobFromAction failed on iteration %d: %v", i, err)
+				}
+				if jobNames[job2.Name] {
+					t.Errorf("Duplicate job name generated: %s", job2.Name)
+				}
+				jobNames[job2.Name] = true
+			}
+		})
+	}
+}
+
+func TestCreateJobFromAction_LabelGeneration(t *testing.T) {
+	reconciler, _ := setupTestEmpty()
+	ctx := context.Background()
+
+	tests := []struct {
+		name                string
+		alertReactionName   string
+		alertName           string
+		actionName          string
+		expectedLabels      map[string]string
+		shouldSanitizeLabel bool
+	}{
+		{
+			name:              "Normal labels",
+			alertReactionName: "cpu-alert-reaction",
+			alertName:         "HighCPUUsage",
+			actionName:        "notify-slack",
+			expectedLabels: map[string]string{
+				"app.kubernetes.io/name":      "alert-reaction-job",
+				"app.kubernetes.io/component": "job",
+				"alert-reaction/alert-name":   "HighCPUUsage",
+				"alert-reaction/action-name":  "notify-slack",
+				"alert-reaction/owner":        "cpu-alert-reaction",
+			},
+			shouldSanitizeLabel: false,
+		},
+		{
+			name:              "Labels with special characters",
+			alertReactionName: "Database_Connection@Error!",
+			alertName:         "DB:Connection/Failed",
+			actionName:        "Send-Email+Alert",
+			expectedLabels: map[string]string{
+				"app.kubernetes.io/name":      "alert-reaction-job",
+				"app.kubernetes.io/component": "job",
+				"alert-reaction/alert-name":   "DB-Connection-Failed",
+				"alert-reaction/action-name":  "Send-Email-Alert",
+				"alert-reaction/owner":        "Database-Connection-Error",
+			},
+			shouldSanitizeLabel: true,
+		},
+		{
+			name:              "Very long label values",
+			alertReactionName: "very-long-alert-reaction-name-that-exceeds-sixty-three-characters-limit",
+			alertName:         "VeryLongAlertNameThatExceedsSixtyThreeCharactersLimitForKubernetesLabels",
+			actionName:        "very-long-action-name-that-also-exceeds-sixty-three-characters",
+			expectedLabels: map[string]string{
+				"app.kubernetes.io/name":      "alert-reaction-job",
+				"app.kubernetes.io/component": "job",
+				// These should be truncated to 63 characters and sanitized
+			},
+			shouldSanitizeLabel: true,
+		},
+		{
+			name:              "Labels starting and ending with special chars",
+			alertReactionName: "123-alert-reaction-456",
+			alertName:         "___AlertName___",
+			actionName:        "---action-name---",
+			expectedLabels: map[string]string{
+				"app.kubernetes.io/name":      "alert-reaction-job",
+				"app.kubernetes.io/component": "job",
+				"alert-reaction/alert-name":   "AlertName",
+				"alert-reaction/action-name":  "action-name",
+				"alert-reaction/owner":        "alert-reaction-456",
+			},
+			shouldSanitizeLabel: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create AlertReaction
+			alertReaction := &alertreactionv1alpha1.AlertReaction{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tt.alertReactionName,
+					Namespace: "default",
+					UID:       types.UID("test-uid"),
+				},
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "alertreaction.io/v1alpha1",
+					Kind:       "AlertReaction",
+				},
+				Spec: alertreactionv1alpha1.AlertReactionSpec{
+					AlertName: tt.alertName,
+					Actions: []alertreactionv1alpha1.Action{
+						{
+							Name:  tt.actionName,
+							Image: "test:latest",
+						},
+					},
+				},
+			}
+
+			action := alertReaction.Spec.Actions[0]
+			alertData := map[string]interface{}{
+				"labels": map[string]interface{}{
+					"severity": "critical",
+				},
+			}
+
+			// Call the method
+			job, err := reconciler.createJobFromAction(ctx, alertReaction, action, alertData)
+			if err != nil {
+				t.Fatalf("createJobFromAction failed: %v", err)
+			}
+
+			// Check standard labels
+			if job.Labels["app.kubernetes.io/name"] != "alert-reaction-job" {
+				t.Errorf("Expected app.kubernetes.io/name=alert-reaction-job, got %s", job.Labels["app.kubernetes.io/name"])
+			}
+
+			if job.Labels["app.kubernetes.io/component"] != "job" {
+				t.Errorf("Expected app.kubernetes.io/component=job, got %s", job.Labels["app.kubernetes.io/component"])
+			}
+
+			// Check that all label values are valid Kubernetes labels
+			for key, value := range job.Labels {
+				if !isValidLabelValue(value) {
+					t.Errorf("Invalid label value for key %s: %s", key, value)
+				}
+				if len(value) > 63 {
+					t.Errorf("Label value for key %s exceeds 63 characters: %s (length: %d)", key, value, len(value))
+				}
+			}
+
+			// Check specific sanitized labels if needed
+			if tt.shouldSanitizeLabel {
+				alertNameLabel := job.Labels["alert-reaction/alert-name"]
+				actionNameLabel := job.Labels["alert-reaction/action-name"]
+				ownerLabel := job.Labels["alert-reaction/owner"]
+
+				// Verify they don't contain invalid characters
+				invalidCharPattern := regexp.MustCompile(`[^A-Za-z0-9_.-]`)
+				if invalidCharPattern.MatchString(alertNameLabel) {
+					t.Errorf("alert-name label contains invalid characters: %s", alertNameLabel)
+				}
+				if invalidCharPattern.MatchString(actionNameLabel) {
+					t.Errorf("action-name label contains invalid characters: %s", actionNameLabel)
+				}
+				if invalidCharPattern.MatchString(ownerLabel) {
+					t.Errorf("owner label contains invalid characters: %s", ownerLabel)
+				}
+
+				// Verify they start and end with alphanumeric
+				startsEndsPattern := regexp.MustCompile(`^[A-Za-z0-9].*[A-Za-z0-9]$|^[A-Za-z0-9]$|^$`)
+				if !startsEndsPattern.MatchString(alertNameLabel) {
+					t.Errorf("alert-name label doesn't start/end with alphanumeric: %s", alertNameLabel)
+				}
+				if !startsEndsPattern.MatchString(actionNameLabel) {
+					t.Errorf("action-name label doesn't start/end with alphanumeric: %s", actionNameLabel)
+				}
+				if !startsEndsPattern.MatchString(ownerLabel) {
+					t.Errorf("owner label doesn't start/end with alphanumeric: %s", ownerLabel)
+				}
+			}
+
+			// Test owner reference
+			if len(job.OwnerReferences) != 1 {
+				t.Errorf("Expected 1 owner reference, got %d", len(job.OwnerReferences))
+			} else {
+				ownerRef := job.OwnerReferences[0]
+				if ownerRef.Name != tt.alertReactionName {
+					t.Errorf("Expected owner reference name %s, got %s", tt.alertReactionName, ownerRef.Name)
+				}
+				if ownerRef.Kind != "AlertReaction" {
+					t.Errorf("Expected owner reference kind AlertReaction, got %s", ownerRef.Kind)
+				}
+			}
+		})
+	}
+}
+
+func TestCreateJobFromAction_OptionalCommand(t *testing.T) {
+	reconciler, _ := setupTestEmpty()
+	ctx := context.Background()
+
+	tests := []struct {
+		name            string
+		action          alertreactionv1alpha1.Action
+		expectedCommand []string
+	}{
+		{
+			name: "With command specified",
+			action: alertreactionv1alpha1.Action{
+				Name:    "with-command",
+				Image:   "test:latest",
+				Command: []string{"echo", "hello"},
+				Args:    []string{"world"},
+			},
+			expectedCommand: []string{"echo", "hello"},
+		},
+		{
+			name: "Without command specified",
+			action: alertreactionv1alpha1.Action{
+				Name:  "without-command",
+				Image: "test:latest",
+				Args:  []string{"world"},
+			},
+			expectedCommand: nil,
+		},
+		{
+			name: "Empty command specified",
+			action: alertreactionv1alpha1.Action{
+				Name:    "empty-command",
+				Image:   "test:latest",
+				Command: []string{},
+				Args:    []string{"world"},
+			},
+			expectedCommand: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create AlertReaction
+			alertReaction := &alertreactionv1alpha1.AlertReaction{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-alert-reaction",
+					Namespace: "default",
+					UID:       types.UID("test-uid"),
+				},
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "alertreaction.io/v1alpha1",
+					Kind:       "AlertReaction",
+				},
+				Spec: alertreactionv1alpha1.AlertReactionSpec{
+					AlertName: "TestAlert",
+					Actions:   []alertreactionv1alpha1.Action{tt.action},
+				},
+			}
+
+			alertData := map[string]interface{}{
+				"labels": map[string]interface{}{
+					"severity": "critical",
+				},
+			}
+
+			// Call the method
+			job, err := reconciler.createJobFromAction(ctx, alertReaction, tt.action, alertData)
+			if err != nil {
+				t.Fatalf("createJobFromAction failed: %v", err)
+			}
+
+			// Check container command
+			if len(job.Spec.Template.Spec.Containers) != 1 {
+				t.Fatalf("Expected 1 container, got %d", len(job.Spec.Template.Spec.Containers))
+			}
+
+			container := job.Spec.Template.Spec.Containers[0]
+
+			// Compare command slices
+			if len(container.Command) != len(tt.expectedCommand) {
+				t.Errorf("Expected command length %d, got %d", len(tt.expectedCommand), len(container.Command))
+			}
+
+			for i, expectedCmd := range tt.expectedCommand {
+				if i >= len(container.Command) || container.Command[i] != expectedCmd {
+					t.Errorf("Expected command[%d]=%s, got %s", i, expectedCmd, container.Command[i])
+				}
+			}
+
+			// Check args are preserved
+			if len(container.Args) != len(tt.action.Args) {
+				t.Errorf("Expected args length %d, got %d", len(tt.action.Args), len(container.Args))
+			}
+
+			for i, expectedArg := range tt.action.Args {
+				if i >= len(container.Args) || container.Args[i] != expectedArg {
+					t.Errorf("Expected args[%d]=%s, got %s", i, expectedArg, container.Args[i])
+				}
+			}
+		})
+	}
+}
+
+// Helper functions for validation
+
+// isValidKubernetesName checks if a string is a valid Kubernetes resource name
+func isValidKubernetesName(s string) bool {
+	if len(s) == 0 || len(s) > 63 {
+		return false
+	}
+	// Must start and end with alphanumeric, contain alphanumeric, dash, underscore, or dot
+	// This is more lenient than DNS labels to account for base64 encoding
+	pattern := regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
+	return pattern.MatchString(s)
+}
+
+// isValidLabelValue checks if a string is a valid Kubernetes label value
+func isValidLabelValue(s string) bool {
+	if len(s) > 63 {
+		return false
+	}
+	if s == "" {
+		return true // Empty values are allowed
+	}
+	// Must start and end with alphanumeric, contain only alphanumeric, dash, underscore, or dot
+	pattern := regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9_.-]*[A-Za-z0-9])?$`)
+	return pattern.MatchString(s)
 }
 
 // Helper function
