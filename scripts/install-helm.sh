@@ -124,7 +124,7 @@ uninstall_chart() {
         if helm uninstall $RELEASE_NAME --namespace $NAMESPACE; then
             print_info "Successfully uninstalled Alert Reaction Operator!"
             print_warning "Note: CRDs and custom resources may still exist."
-            print_info "To remove CRDs: kubectl delete crd alertreactions.alertreaction.io"
+            print_info "To remove CRDs: kubectl delete crd alertreactions.karo.io"
         else
             print_error "Failed to uninstall Alert Reaction Operator"
             exit 1

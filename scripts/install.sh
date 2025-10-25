@@ -9,7 +9,7 @@ kubectl create namespace alert-reaction-system --dry-run=client -o yaml | kubect
 
 # Install CRD
 echo "Installing Custom Resource Definition..."
-kubectl apply -f config/crd/alertreaction.io_alertreactions.yaml
+kubectl apply -f config/crd/karo.io_alertreactions.yaml
 
 # Install RBAC
 echo "Installing RBAC..."

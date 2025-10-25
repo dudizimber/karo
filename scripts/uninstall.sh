@@ -18,7 +18,7 @@ kubectl delete -f config/rbac/rbac.yaml --ignore-not-found=true
 
 # Delete CRD (this will also delete all AlertReaction resources)
 echo "Removing Custom Resource Definition..."
-kubectl delete -f config/crd/alertreaction.io_alertreactions.yaml --ignore-not-found=true
+kubectl delete -f config/crd/karo.io_alertreactions.yaml --ignore-not-found=true
 
 echo ""
 echo "Alert Reaction Operator has been uninstalled successfully!"

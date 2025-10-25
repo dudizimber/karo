@@ -122,7 +122,7 @@ receivers:
 2. **Create an AlertReaction** resource to define responses:
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: high-cpu-reaction
@@ -161,7 +161,7 @@ kubectl get jobs -l alert-reaction/alert-name=HighCPUUsage
 The `AlertReaction` CRD defines how the operator should respond to specific alerts:
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: example-reaction
@@ -217,7 +217,7 @@ Environment variables support dynamic values from alert data:
 #### Example 1: Database Backup on Critical Alert
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: database-backup-reaction
@@ -239,7 +239,7 @@ spec:
 #### Example 2: Auto-scaling Response
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: scale-up-reaction
@@ -260,7 +260,7 @@ spec:
 #### Example 3: Diagnostic Collection
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: diagnostics-reaction
@@ -291,7 +291,7 @@ spec:
 #### Example 4: Volume Mounting and Service Accounts
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: volume-example-reaction
@@ -780,9 +780,9 @@ The operator requires minimal permissions:
 
 ```yaml
 # AlertReaction CRD management
-- alertreaction.io: alertreactions (all verbs)
-- alertreaction.io: alertreactions/status (get, update, patch)
-- alertreaction.io: alertreactions/finalizers (update)
+- karo.io: alertreactions (all verbs)
+- karo.io: alertreactions/status (get, update, patch)
+- karo.io: alertreactions/finalizers (update)
 
 # Job management
 - batch: jobs (all verbs)

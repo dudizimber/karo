@@ -355,7 +355,7 @@ func TestCreateJobFromAction(t *testing.T) {
 			UID:       "test-uid",
 		},
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "alertreaction.io/v1",
+			APIVersion: "karo.io/v1",
 			Kind:       "AlertReaction",
 		},
 		Spec: alertreactionv1alpha1.AlertReactionSpec{
@@ -462,7 +462,7 @@ func TestCreateJobFromActionWithVolumes(t *testing.T) {
 			UID:       "test-uid",
 		},
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "alertreaction.io/v1",
+			APIVersion: "karo.io/v1",
 			Kind:       "AlertReaction",
 		},
 		Spec: alertreactionv1alpha1.AlertReactionSpec{
@@ -744,7 +744,7 @@ func TestCreateJobFromAction_JobNameGeneration(t *testing.T) {
 					UID:       types.UID("test-uid"),
 				},
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: "alertreaction.io/v1alpha1",
+					APIVersion: "karo.io/v1alpha1",
 					Kind:       "AlertReaction",
 				},
 				Spec: alertreactionv1alpha1.AlertReactionSpec{
@@ -878,7 +878,7 @@ func TestCreateJobFromAction_LabelGeneration(t *testing.T) {
 					UID:       types.UID("test-uid"),
 				},
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: "alertreaction.io/v1alpha1",
+					APIVersion: "karo.io/v1alpha1",
 					Kind:       "AlertReaction",
 				},
 				Spec: alertreactionv1alpha1.AlertReactionSpec{
@@ -1021,7 +1021,7 @@ func TestCreateJobFromAction_OptionalCommand(t *testing.T) {
 					UID:       types.UID("test-uid"),
 				},
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: "alertreaction.io/v1alpha1",
+					APIVersion: "karo.io/v1alpha1",
 					Kind:       "AlertReaction",
 				},
 				Spec: alertreactionv1alpha1.AlertReactionSpec{

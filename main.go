@@ -57,7 +57,7 @@ func main() {
 		Metrics:                 metricsserver.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress:  probeAddr,
 		LeaderElection:          enableLeaderElection,
-		LeaderElectionID:        "f1c5ece8.alertreaction.io",
+		LeaderElectionID:        "f1c5ece8.karo.io",
 		LeaderElectionNamespace: "default",
 	})
 	if err != nil {

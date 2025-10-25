@@ -1,4 +1,4 @@
-apiVersion: alertreaction.io/v1alpha1
+apiVersion: karo.io/v1alpha1
 kind: AlertReaction
 metadata:
   name: high-cpu-alert-reaction
@@ -45,7 +45,7 @@ spec:
         cpu: "200m"
         memory: "128Mi"
 ---
-apiVersion: alertreaction.io/v1alpha1
+apiVersion: karo.io/v1alpha1
 kind: AlertReaction
 metadata:
   name: disk-space-alert-reaction
@@ -84,7 +84,7 @@ spec:
         alertRef:
           fieldPath: "annotations.summary"
 ---
-apiVersion: alertreaction.io/v1alpha1
+apiVersion: karo.io/v1alpha1
 kind: AlertReaction
 metadata:
   name: pod-crash-alert-reaction

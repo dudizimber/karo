@@ -106,7 +106,7 @@ var _ = Describe("AlertReaction Controller", func() {
 			ctx := context.Background()
 			alertReaction := &alertreactionv1alpha1.AlertReaction{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: "alertreaction.io/v1",
+					APIVersion: "karo.io/v1",
 					Kind:       "AlertReaction",
 				},
 				ObjectMeta: metav1.ObjectMeta{

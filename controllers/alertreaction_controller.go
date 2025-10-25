@@ -28,9 +28,9 @@ type AlertReactionReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=alertreaction.io,resources=alertreactions,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=alertreaction.io,resources=alertreactions/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=alertreaction.io,resources=alertreactions/finalizers,verbs=update
+//+kubebuilder:rbac:groups=karo.io,resources=alertreactions,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=karo.io,resources=alertreactions/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=karo.io,resources=alertreactions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch

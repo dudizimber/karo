@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.14.0
-  name: alertreactions.alertreaction.io
+  name: alertreactions.karo.io
 spec:
-  group: alertreaction.io
+  group: karo.io
   names:
     kind: AlertReaction
     listKind: AlertReactionList

@@ -63,7 +63,7 @@ The chart automatically installs the required CRDs (`AlertReaction`) as part of 
 
 ```bash
 # Update CRDs manually (if needed during upgrades)
-kubectl apply -f https://raw.githubusercontent.com/dudizimber/karo/main/config/crd/alertreaction.io_alertreactions.yaml
+kubectl apply -f https://raw.githubusercontent.com/dudizimber/karo/main/config/crd/karo.io_alertreactions.yaml
 ```
 
 ## Configuration
@@ -196,7 +196,7 @@ affinity:
 After installing the operator, create `AlertReaction` resources to define automated responses:
 
 ```yaml
-apiVersion: alertreaction.io/v1alpha1
+apiVersion: karo.io/v1alpha1
 kind: AlertReaction
 metadata:
   name: high-cpu-reaction

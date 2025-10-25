@@ -28,7 +28,7 @@
 
    Example AlertReaction:
    ```yaml
-   apiVersion: alertreaction.io/v1
+   apiVersion: karo.io/v1
    kind: AlertReaction
    metadata:
      name: example-alert-reaction

@@ -74,7 +74,7 @@ type Action struct {
 
 **Example configuration:**
 ```yaml
-apiVersion: alertreaction.io/v1alpha1
+apiVersion: karo.io/v1alpha1
 kind: AlertReaction
 metadata:
   name: example-with-new-fields
@@ -113,7 +113,7 @@ spec:
 - [ ] OpenAPI schema markers for basic validation
 
 **Generated manifests:**
-- [ ] `config/crd/bases/alertreaction.io_alertreactions.yaml` - Generated after `make manifests`
+- [ ] `config/crd/bases/karo.io_alertreactions.yaml` - Generated after `make manifests`
 
 **Tests:**
 - [ ] Unit tests for new API types

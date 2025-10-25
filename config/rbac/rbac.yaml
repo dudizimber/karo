@@ -10,7 +10,7 @@ metadata:
   name: karo
 rules:
 - apiGroups:
-  - alertreaction.io
+  - karo.io
   resources:
   - alertreactions
   verbs:
@@ -22,7 +22,7 @@ rules:
   - patch
   - delete
 - apiGroups:
-  - alertreaction.io
+  - karo.io
   resources:
   - alertreactions/status
   verbs:
@@ -30,7 +30,7 @@ rules:
   - update
   - patch
 - apiGroups:
-  - alertreaction.io
+  - karo.io
   resources:
   - alertreactions/finalizers
   verbs:
