@@ -1,7 +1,11 @@
 # CRD Changes Prompt Template
 
 ## Context
-I'm working on the k8s-alert-reaction-operator, a Kubernetes operator that uses a custom AlertReaction CRD. The CRD currently supports Prometheus-style matchers and defines how alerts should trigger Kubernetes Jobs.
+# CRD Changes Prompt Template
+
+## Prompt
+```
+I'm working on Karo (Kubernetes Alert Reaction Operator), a Kubernetes operator that uses a custom AlertReaction CRD. The CRD currently supports Prometheus-style matchers and defines how alerts should trigger Kubernetes Jobs.
 
 ## Current CRD Structure
 **Current AlertReaction spec:**

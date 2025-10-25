@@ -1,7 +1,8 @@
-# Documentation Prompt Template
+# Write Documentation Prompt Template
 
-## Context
-I'm working on the k8s-alert-reaction-operator and need to create or update documentation. The operator is a Kubernetes controller that creates Jobs in response to Prometheus alerts via AlertManager webhooks.
+## Prompt
+```
+I'm working on Karo (Kubernetes Alert Reaction Operator) and need to create or update documentation. The operator is a Kubernetes controller that creates Jobs in response to Prometheus alerts via AlertManager webhooks.
 
 ## Documentation Task
 **Type of documentation:**

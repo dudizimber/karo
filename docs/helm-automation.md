@@ -1,6 +1,6 @@
 # Helm Chart Release Automation
 
-This document describes the automated Helm chart release system for the Alert Reaction Operator.
+This document describes the automated Helm chart release system for Karo (Kubernetes Alert Reaction Operator).
 
 ## Overview
 
@@ -69,7 +69,7 @@ The project now includes comprehensive automation for Helm chart releases that t
 
 **Integration**: Used by both manual workflows and CI/CD automation
 
-### 4. Enhanced Chart Metadata (`charts/alert-reaction-operator/Chart.yaml`)
+### 4. Enhanced Chart Metadata (`charts/karo/Chart.yaml`)
 
 **Improvements**:
 - Comprehensive keyword tagging
@@ -184,8 +184,8 @@ gh workflow run draft-release.yml -f version=v1.0.0 -f prerelease=false
 ./scripts/update-chart.sh 1.0.0-dev
 
 # Package and test
-helm package charts/alert-reaction-operator/
-helm install test-release ./alert-reaction-operator-1.0.0-dev.tgz
+helm package charts/karo/
+helm install test-release ./karo-1.0.0-dev.tgz
 ```
 
 ## Installation Methods
@@ -194,24 +194,24 @@ After a release is published, users have multiple installation options:
 
 ### 1. OCI Registry (Recommended)
 ```bash
-helm install alert-reaction-operator \
-  oci://ghcr.io/dudizimber/charts/alert-reaction-operator \
+helm install karo \
+  oci://ghcr.io/dudizimber/charts/karo \
   --version 1.0.0
 ```
 
 ### 2. Helm Repository
 ```bash
-helm repo add alert-reaction-operator \
-  https://dudizimber.github.io/k8s-alert-reaction-operator/
+helm repo add karo \
+  https://dudizimber.github.io/karo/
 helm repo update
-helm install alert-reaction-operator \
-  alert-reaction-operator/alert-reaction-operator --version 1.0.0
+helm install karo \
+  karo/karo --version 1.0.0
 ```
 
 ### 3. GitHub Release Assets
 ```bash
-curl -L https://github.com/dudizimber/k8s-alert-reaction-operator/releases/download/v1.0.0/alert-reaction-operator-1.0.0.tgz -o chart.tgz
-helm install alert-reaction-operator ./chart.tgz
+curl -L https://github.com/dudizimber/karo/releases/download/v1.0.0/karo-1.0.0.tgz -o chart.tgz
+helm install karo ./chart.tgz
 ```
 
 ## Version Management
@@ -251,8 +251,8 @@ Developers can run the same checks locally:
 ./scripts/validate-chart.sh
 
 # Specific validations
-helm lint charts/alert-reaction-operator/
-helm template test charts/alert-reaction-operator/ | yq eval '.'
+helm lint charts/karo/
+helm template test charts/karo/ | yq eval '.'
 ```
 
 ## Security Considerations

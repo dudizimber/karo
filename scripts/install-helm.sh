@@ -3,8 +3,8 @@ set -e
 
 # Alert Reaction Operator Helm Chart Installation Script
 
-CHART_DIR="charts/alert-reaction-operator"
-RELEASE_NAME="alert-reaction-operator"
+CHART_DIR="charts/karo"
+RELEASE_NAME="karo"
 NAMESPACE="default"
 VALUES_FILE=""
 
@@ -36,7 +36,7 @@ Usage: $0 [OPTIONS]
 
 Options:
     -n, --namespace NAMESPACE    Target namespace (default: default)
-    -r, --release RELEASE        Release name (default: alert-reaction-operator)
+    -r, --release RELEASE        Release name (default: karo)
     -f, --values VALUES_FILE     Custom values file
     -e, --environment ENV        Use predefined environment (dev|prod)
     --dry-run                    Perform a dry run
@@ -105,7 +105,7 @@ install_chart() {
             print_info "  kubectl get svc ${RELEASE_NAME}-webhook -n $NAMESPACE"
             print_info ""
             print_info "To see the operator logs:"
-            print_info "  kubectl logs -l app.kubernetes.io/name=alert-reaction-operator -n $NAMESPACE"
+            print_info "  kubectl logs -l app.kubernetes.io/name=karo -n $NAMESPACE"
         fi
     else
         print_error "Failed to $action Alert Reaction Operator"

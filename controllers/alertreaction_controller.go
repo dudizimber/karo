@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	alertreactionv1alpha1 "github.com/dudizimber/k8s-alert-reaction-operator/api/v1alpha1"
+	alertreactionv1alpha1 "github.com/dudizimber/karo/api/v1alpha1"
 )
 
 // AlertReactionReconciler reconciles an AlertReaction object

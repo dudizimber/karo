@@ -23,8 +23,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	alertreactionv1alpha1 "k8s-alert-reaction-operator/api/v1alpha1"
-	"k8s-alert-reaction-operator/controllers"
+	alertreactionv1alpha1 "github.com/dudizimber/karo/api/v1alpha1"
+	"github.com/dudizimber/karo/controllers"
 )
 
 var cfg *rest.Config

@@ -1,7 +1,11 @@
 # Commit Message Prompt Template
 
 ## Context
-I'm working on the k8s-alert-reaction-operator and need to write a conventional commit message that follows our project standards.
+# Commit Messages Prompt Template
+
+## Prompt
+```
+I'm working on Karo (Kubernetes Alert Reaction Operator) and need to write a conventional commit message that follows our project standards.
 
 ## Changes Made
 **Files modified:**

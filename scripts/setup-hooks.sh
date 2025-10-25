@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Git hooks setup script for k8s-alert-reaction-operator
+# Git hooks setup script for Karo (Kubernetes Alert Reaction Operator)
 # This script installs git hooks for automated linting and formatting
 
 set -e
@@ -12,7 +12,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🔧 Setting up Git hooks for k8s-alert-reaction-operator...${NC}"
+echo ""
+echo -e "${BLUE}🔧 Setting up Git hooks for Karo (Kubernetes Alert Reaction Operator)...${NC}"
+echo ""
 
 # Check if we're in a git repository
 if [ ! -d ".git" ]; then

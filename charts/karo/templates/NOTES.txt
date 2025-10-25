@@ -6,23 +6,23 @@
   {{- end }}
 {{- end }}
 {{- else if contains "NodePort" .Values.service.webhook.type }}
-  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "alert-reaction-operator.webhookServiceName" . }})
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "karo.webhookServiceName" . }})
   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
   echo http://$NODE_IP:$NODE_PORT
 {{- else if contains "LoadBalancer" .Values.service.webhook.type }}
      NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "alert-reaction-operator.webhookServiceName" . }}'
-  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "alert-reaction-operator.webhookServiceName" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "karo.webhookServiceName" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "karo.webhookServiceName" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
   echo http://$SERVICE_IP:{{ .Values.service.webhook.port }}
 {{- else if contains "ClusterIP" .Values.service.webhook.type }}
-  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "{{ include "alert-reaction-operator.selectorLabels" . | replace "\n" "," }}" -o jsonpath="{.items[0].metadata.name}")
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "{{ include "karo.selectorLabels" . | replace "\n" "," }}" -o jsonpath="{.items[0].metadata.name}")
   export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
   echo "Visit http://127.0.0.1:8080/webhook to use your application"
   kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
 {{- end }}
 
 2. Configure AlertManager to send webhooks to:
-   {{ include "alert-reaction-operator.webhookServiceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.webhook.port }}/webhook
+   {{ include "karo.webhookServiceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.webhook.port }}/webhook
 
 3. Create AlertReaction resources to define how alerts should trigger jobs:
 
@@ -45,12 +45,12 @@
    ```
 
 4. Check the operator status:
-   kubectl get deployment {{ include "alert-reaction-operator.fullname" . }} -n {{ .Release.Namespace }}
+   kubectl get deployment {{ include "karo.fullname" . }} -n {{ .Release.Namespace }}
 
 {{- if .Values.operator.metrics.enabled }}
 5. View metrics (if enabled):
-   kubectl port-forward svc/{{ include "alert-reaction-operator.metricsServiceName" . }} 8080:{{ .Values.service.metrics.port }} -n {{ .Release.Namespace }}
+   kubectl port-forward svc/{{ include "karo.metricsServiceName" . }} 8080:{{ .Values.service.metrics.port }} -n {{ .Release.Namespace }}
    # Then visit http://localhost:8080/metrics
 {{- end }}
 
-For more information, visit: https://github.com/dudizimber/k8s-alert-reaction-operator
+For more information, visit: https://github.com/dudizimber/karo

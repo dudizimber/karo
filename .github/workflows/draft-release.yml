@@ -19,7 +19,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: karo
 
 permissions:
   contents: write
@@ -230,7 +230,7 @@ jobs:
           
           # Create release bundle
           mkdir -p release
-          cp bin/manager release/alert-reaction-operator
+          cp bin/manager release/karo
           cp -r config release/
           cp -r examples release/
           cp -r scripts release/
@@ -239,8 +239,8 @@ jobs:
           
           # Create tarball by explicitly listing contents to avoid race conditions
           cd release
-          tar -czf ../alert-reaction-operator-${VERSION#v}.tar.gz \
-            alert-reaction-operator \
+          tar -czf ../karo-${VERSION#v}.tar.gz \
+            karo \
             config/ \
             examples/ \
             scripts/ \
@@ -251,7 +251,7 @@ jobs:
           cd ..
           
           # Move tarball to release directory and create checksums
-          mv alert-reaction-operator-${VERSION#v}.tar.gz release/
+          mv karo-${VERSION#v}.tar.gz release/
           cd release
           sha256sum *.tar.gz > checksums.txt
           cd ..

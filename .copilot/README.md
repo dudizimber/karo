@@ -1,6 +1,6 @@
-# Copilot Prompts for k8s-alert-reaction-operator
+# Copilot Prompts for Karo
 
-This directory contains prompt templates to streamline development with GitHub Copilot for the k8s-alert-reaction-operator project.
+This directory contains prompt templates to streamline development with GitHub Copilot for Karo (Kubernetes Alert Reaction Operator).
 
 ## How to Use
 

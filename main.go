@@ -16,9 +16,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	alertreactionv1alpha1 "github.com/dudizimber/k8s-alert-reaction-operator/api/v1alpha1"
-	"github.com/dudizimber/k8s-alert-reaction-operator/controllers"
-	"github.com/dudizimber/k8s-alert-reaction-operator/webhook"
+	alertreactionv1alpha1 "github.com/dudizimber/karo/api/v1alpha1"
+	"github.com/dudizimber/karo/controllers"
+	"github.com/dudizimber/karo/webhook"
 )
 
 var (

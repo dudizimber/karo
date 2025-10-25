@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pre-push Git hook for the k8s-alert-reaction-operator
+# Pre-push Git hook for Karo (Kubernetes Alert Reaction Operator)
 # This hook runs comprehensive checks before allowing pushes to remote repositories
 
 set -e

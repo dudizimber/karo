@@ -1,7 +1,11 @@
 # Code Review Prompt Template
 
 ## Context
-I'm working on the k8s-alert-reaction-operator and need a comprehensive code review. The operator is built with Go 1.24+, controller-runtime, and follows Kubernetes controller patterns.
+# Code Review Prompt Template
+
+## Prompt
+```
+I'm working on Karo (Kubernetes Alert Reaction Operator) and need a comprehensive code review. The operator is built with Go 1.24+, controller-runtime, and follows Kubernetes controller patterns.
 
 ## Code Review Request
 **Review type:**

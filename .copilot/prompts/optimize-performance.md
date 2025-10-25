@@ -1,7 +1,8 @@
-# Performance Optimization Prompt Template
+# Optimize Performance Prompt Template
 
-## Context
-I'm working on performance optimization for the k8s-alert-reaction-operator, a Kubernetes controller that processes Prometheus alerts and creates Jobs. I need to identify and resolve performance bottlenecks.
+## Prompt
+```
+I'm working on performance optimization for Karo (Kubernetes Alert Reaction Operator), a Kubernetes controller that processes Prometheus alerts and creates Jobs. I need to identify and resolve performance bottlenecks.
 
 ## Current Performance Profile
 **Observed performance issues:**

@@ -1,6 +1,6 @@
-# Sample AlertManager configuration for Kubernetes Alert Reaction Operator
+# Sample AlertManager configuration for Karo (Kubernetes Alert Reaction Operator)
 #
-# This configuration shows how to integrate the Alert Reaction Operator
+# This configuration shows how to integrate Karo
 # with your existing AlertManager setup.
 
 global:
@@ -31,15 +31,15 @@ route:
   routes:
   - match:
       alertname: HighCPUUsage
-    receiver: k8s-alert-reaction-operator
+    receiver: karo
     
   - match:
       alertname: LowDiskSpace
-    receiver: k8s-alert-reaction-operator
+    receiver: karo
     
   - match:
       alertname: PodCrashLooping
-    receiver: k8s-alert-reaction-operator
+    receiver: karo
     
   # Route all other alerts to the default webhook and email
   - match_re:
@@ -51,10 +51,10 @@ receivers:
   webhook_configs:
   - url: 'http://localhost:5001/'
 
-# Receiver for the Alert Reaction Operator
-- name: 'k8s-alert-reaction-operator'
+# Receiver for Karo (Kubernetes Alert Reaction Operator)
+- name: 'karo'
   webhook_configs:
-  - url: 'http://alert-reaction-operator-webhook.default.svc.cluster.local:9090/webhook'
+  - url: 'http://karo-webhook.default.svc.cluster.local:9090/webhook'
     send_resolved: false
     http_config:
       timeout: 10s
@@ -73,7 +73,7 @@ receivers:
       Severity: {{ .Labels.severity }}
       {{ end }}
   webhook_configs:
-  - url: 'http://alert-reaction-operator-webhook.default.svc.cluster.local:9090/webhook'
+  - url: 'http://karo-webhook.default.svc.cluster.local:9090/webhook'
     send_resolved: false
 
 # Inhibition rules allow you to mute alerts when other alerts are firing

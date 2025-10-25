@@ -1,10 +1,10 @@
-# Alert Reaction Operator Helm Chart
+# Karo Helm Chart
 
-This Helm chart deploys the Alert Reaction Operator, a Kubernetes operator that creates Jobs in response to Prometheus alerts.
+This Helm chart deploys Karo (Kubernetes Alert Reaction Operator), a Kubernetes operator that creates Jobs in response to Prometheus alerts.
 
 ## Overview
 
-The Alert Reaction Operator watches for `AlertReaction` custom resources and creates Kubernetes Jobs when matching Prometheus/Alertmanager alerts are received via webhook. This enables automated incident response and remediation workflows.
+Karo watches for `AlertReaction` custom resources and creates Kubernetes Jobs when matching Prometheus/Alertmanager alerts are received via webhook. This enables automated incident response and remediation workflows.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ The Alert Reaction Operator watches for `AlertReaction` custom resources and cre
 
 ```bash
 # Add the Helm repository
-helm repo add alert-reaction-operator https://dudizimber.github.io/k8s-alert-reaction-operator/
+helm repo add karo https://dudizimber.github.io/karo/
 helm repo update
 ```
 
@@ -26,33 +26,33 @@ helm repo update
 
 ```bash
 # Install with default values
-helm install my-operator alert-reaction-operator/alert-reaction-operator
+helm install my-operator karo/karo
 
 # Install with custom values
-helm install my-operator alert-reaction-operator/alert-reaction-operator -f values.yaml
+helm install my-operator karo/karo -f values.yaml
 
 # Install in specific namespace
-helm install my-operator alert-reaction-operator/alert-reaction-operator -n monitoring --create-namespace
+helm install my-operator karo/karo -n monitoring --create-namespace
 ```
 
 ### Install from OCI Registry
 
 ```bash
 # Install directly from GitHub Container Registry
-helm install my-operator oci://ghcr.io/dudizimber/charts/alert-reaction-operator --version 0.1.0
+helm install my-operator oci://ghcr.io/dudizimber/charts/karo --version 0.1.0
 
 # Install with custom values
-helm install my-operator oci://ghcr.io/dudizimber/charts/alert-reaction-operator --version 0.1.0 -f values.yaml
+helm install my-operator oci://ghcr.io/dudizimber/charts/karo --version 0.1.0 -f values.yaml
 ```
 
 ### Install from Release Assets
 
 ```bash
 # Download chart from GitHub releases
-curl -L https://github.com/dudizimber/k8s-alert-reaction-operator/releases/download/v0.1.0/alert-reaction-operator-0.1.0.tgz -o alert-reaction-operator-0.1.0.tgz
+curl -L https://github.com/dudizimber/karo/releases/download/v0.1.0/karo-0.1.0.tgz -o karo-0.1.0.tgz
 
 # Install from local file
-helm install my-operator ./alert-reaction-operator-0.1.0.tgz
+helm install my-operator ./karo-0.1.0.tgz
 ```
 
 ### Custom Resource Definitions (CRDs)
@@ -63,7 +63,7 @@ The chart automatically installs the required CRDs (`AlertReaction`) as part of 
 
 ```bash
 # Update CRDs manually (if needed during upgrades)
-kubectl apply -f https://raw.githubusercontent.com/dudizimber/k8s-alert-reaction-operator/main/config/crd/alertreaction.io_alertreactions.yaml
+kubectl apply -f https://raw.githubusercontent.com/dudizimber/karo/main/config/crd/alertreaction.io_alertreactions.yaml
 ```
 
 ## Configuration
@@ -73,7 +73,7 @@ kubectl apply -f https://raw.githubusercontent.com/dudizimber/k8s-alert-reaction
 ```yaml
 # values.yaml
 image:
-  repository: docker.io/dudizimber/k8s-alert-reaction-operator
+  repository: docker.io/dudizimber/karo
   tag: "0.1.0"
   pullPolicy: IfNotPresent
 
@@ -149,7 +149,7 @@ affinity:
           - key: app.kubernetes.io/name
             operator: In
             values:
-            - alert-reaction-operator
+            - karo
         topologyKey: kubernetes.io/hostname
 ```
 
@@ -157,7 +157,7 @@ affinity:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `image.repository` | Container image repository | `docker.io/dudizimber/k8s-alert-reaction-operator` |
+| `image.repository` | Container image repository | `docker.io/dudizimber/karo` |
 | `image.tag` | Container image tag | `"latest"` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |
 | `imagePullSecrets` | Image pull secrets | `[]` |
@@ -239,7 +239,7 @@ route:
 receivers:
 - name: 'webhook'
   webhook_configs:
-  - url: 'http://alert-reaction-operator.monitoring.svc.cluster.local:8080/webhook'
+  - url: 'http://karo.monitoring.svc.cluster.local:8080/webhook'
     http_config:
       basic_auth:
         username: 'alertmanager'
@@ -279,7 +279,7 @@ The operator exposes the following metrics:
 
 ```bash
 # Get operator pod name
-kubectl get pods -l app.kubernetes.io/name=alert-reaction-operator
+kubectl get pods -l app.kubernetes.io/name=karo
 
 # View logs
 kubectl logs -f <pod-name>
@@ -301,7 +301,7 @@ kubectl describe alertreaction <name>
 # Test webhook endpoint
 kubectl run curl --image=curlimages/curl --rm -it --restart=Never -- \
   curl -X POST \
-  http://alert-reaction-operator.default.svc.cluster.local:8080/webhook \
+  http://karo.default.svc.cluster.local:8080/webhook \
   -H "Content-Type: application/json" \
   -d '{"alerts": [{"labels": {"alertname": "TestAlert"}}]}'
 ```
@@ -322,14 +322,14 @@ kubectl run curl --image=curlimages/curl --rm -it --restart=Never -- \
 
 ## Contributing
 
-For development and contribution guidelines, see the [main repository](https://github.com/dudizimber/k8s-alert-reaction-operator).
+For development and contribution guidelines, see the [main repository](https://github.com/dudizimber/karo).
 
 ## License
 
-This chart is licensed under the Apache License 2.0. See [LICENSE](https://github.com/dudizimber/k8s-alert-reaction-operator/blob/main/LICENSE) for details.
+This chart is licensed under the Apache License 2.0. See [LICENSE](https://github.com/dudizimber/karo/blob/main/LICENSE) for details.
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/dudizimber/k8s-alert-reaction-operator/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/dudizimber/k8s-alert-reaction-operator/discussions)
-- **Official Actions**: [alert-reactions repository](https://github.com/dudizimber/alert-reactions)
+- **Issues**: [GitHub Issues](https://github.com/dudizimber/karo/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/dudizimber/karo/discussions)
+- **Official Actions**: [karo-reactions repository](https://github.com/dudizimber/karo-reactions)

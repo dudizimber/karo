@@ -21,21 +21,21 @@ kubectl apply -f config/manager/deployment.yaml
 
 # Wait for deployment to be ready
 echo "Waiting for operator to be ready..."
-kubectl wait --for=condition=available --timeout=300s deployment/alert-reaction-operator
+kubectl wait --for=condition=available --timeout=300s deployment/karo
 
 # Get webhook URL
 echo ""
 echo "Installation completed successfully!"
 echo ""
-echo "Webhook endpoint: http://alert-reaction-operator-webhook.default.svc.cluster.local:9090/webhook"
+echo "Webhook endpoint: http://karo-webhook.default.svc.cluster.local:9090/webhook"
 echo ""
 echo "To configure AlertManager, add this receiver to your configuration:"
 echo ""
 cat << 'EOF'
 receivers:
-- name: 'k8s-alert-reaction-operator'
+- name: 'karo'
   webhook_configs:
-  - url: 'http://alert-reaction-operator-webhook.default.svc.cluster.local:9090/webhook'
+  - url: 'http://karo-webhook.default.svc.cluster.local:9090/webhook'
     send_resolved: false
     http_config:
       timeout: 10s

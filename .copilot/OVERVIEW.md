@@ -123,4 +123,4 @@ To improve the prompt system:
 
 ---
 
-**Made with ❤️ to streamline k8s-alert-reaction-operator development**
+**Made with ❤️ to streamline Karo development**

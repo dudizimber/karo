@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: alert-reaction-operator
+  name: karo
   namespace: default
   labels:
-    app: alert-reaction-operator
+    app: karo
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: alert-reaction-operator
+      app: karo
   template:
     metadata:
       labels:
-        app: alert-reaction-operator
+        app: karo
     spec:
-      serviceAccountName: alert-reaction-operator
+      serviceAccountName: karo
       containers:
       - name: manager
-        image: docker.io/dudizimber/k8s-alert-reaction-operator:latest
+        image: docker.io/dudizimber/karo:latest
         imagePullPolicy: IfNotPresent
         command:
         - /manager
@@ -68,10 +68,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: alert-reaction-operator-webhook
+  name: karo-webhook
   namespace: default
   labels:
-    app: alert-reaction-operator
+    app: karo
 spec:
   type: ClusterIP
   ports:
@@ -80,15 +80,15 @@ spec:
     targetPort: webhook
     protocol: TCP
   selector:
-    app: alert-reaction-operator
+    app: karo
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: alert-reaction-operator-metrics
+  name: karo-metrics
   namespace: default
   labels:
-    app: alert-reaction-operator
+    app: karo
 spec:
   type: ClusterIP
   ports:
@@ -97,4 +97,4 @@ spec:
     targetPort: metrics
     protocol: TCP
   selector:
-    app: alert-reaction-operator
+    app: karo

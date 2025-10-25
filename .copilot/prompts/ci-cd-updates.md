@@ -1,7 +1,11 @@
 # CI/CD Updates Prompt Template
 
 ## Context
-I'm working on the k8s-alert-reaction-operator CI/CD pipeline using GitHub Actions. The current pipeline includes building, testing, security scanning, and multi-architecture container image builds.
+# CI/CD Updates Prompt Template
+
+## Prompt
+```
+I'm working on the Karo (Kubernetes Alert Reaction Operator) CI/CD pipeline using GitHub Actions. The current pipeline includes building, testing, security scanning, and multi-architecture container image builds.
 
 ## Current Pipeline Overview
 **Existing workflows:**

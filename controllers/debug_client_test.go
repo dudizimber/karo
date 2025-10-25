@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	alertreactionv1alpha1 "github.com/dudizimber/k8s-alert-reaction-operator/api/v1alpha1"
+	alertreactionv1alpha1 "github.com/dudizimber/karo/api/v1alpha1"
 )
 
 func TestReconcilerClientDebug(t *testing.T) {

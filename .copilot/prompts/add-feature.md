@@ -1,7 +1,7 @@
 # Add Feature Prompt Template
 
 ## Context
-I'm working on the k8s-alert-reaction-operator, a Kubernetes operator that creates Jobs in response to Prometheus alerts. The operator uses:
+I'm working on Karo (Kubernetes Alert Reaction Operator), a Kubernetes operator that creates Jobs in response to Prometheus alerts. The operator uses:
 - Go 1.24+ with controller-runtime framework
 - AlertReaction CRD with Prometheus-style matchers
 - Webhook endpoint for receiving AlertManager notifications

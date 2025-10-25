@@ -2,7 +2,7 @@
 
 ## Feature Development
 ```
-I need to add {feature_name} to the k8s-alert-reaction-operator.
+I need to add {feature_name} to Karo (Kubernetes Alert Reaction Operator).
 
 Requirements:
 - {requirement_1}
@@ -18,7 +18,7 @@ Please help me implement this feature following our existing patterns.
 
 ## Bug Fix
 ```
-I'm experiencing {issue_description} in the k8s-alert-reaction-operator.
+I'm experiencing {issue_description} in Karo (Kubernetes Alert Reaction Operator).
 
 Expected: {expected_behavior}
 Actual: {actual_behavior}
@@ -31,7 +31,7 @@ Please help me debug and fix this issue.
 
 ## Commit Message
 ```
-I made changes to {files_modified} in the k8s-alert-reaction-operator.
+I made changes to {files_modified} in Karo (Kubernetes Alert Reaction Operator).
 
 Changes:
 - {change_1}
@@ -57,7 +57,7 @@ Please create table-driven tests following our project patterns.
 
 ## Code Review
 ```
-Please review this code for the k8s-alert-reaction-operator:
+Please review this code for Karo (Kubernetes Alert Reaction Operator):
 
 {paste_code_to_review}
 
@@ -72,7 +72,7 @@ Are there any issues or improvements you'd suggest?
 
 ## Performance Optimization
 ```
-The k8s-alert-reaction-operator has performance issues:
+Karo (Kubernetes Alert Reaction Operator) has performance issues:
 
 Current metrics:
 - Alert processing: {latency}
@@ -87,7 +87,7 @@ Please analyze and suggest optimizations for:
 
 ## Documentation
 ```
-I need to document {feature_or_topic} for the k8s-alert-reaction-operator.
+I need to document {feature_or_topic} for Karo (Kubernetes Alert Reaction Operator).
 
 Target audience: {users/developers/operators}
 Content needed:
@@ -99,7 +99,7 @@ Please create comprehensive documentation with examples.
 
 ## Refactoring
 ```
-This code in the k8s-alert-reaction-operator needs refactoring:
+This code in Karo (Kubernetes Alert Reaction Operator) needs refactoring:
 
 {paste_code_to_refactor}
 
@@ -117,7 +117,7 @@ Please suggest a refactored structure.
 
 ## CI/CD Updates
 ```
-I want to improve the k8s-alert-reaction-operator CI/CD pipeline.
+I want to improve the Karo (Kubernetes Alert Reaction Operator) CI/CD pipeline.
 
 Current pipeline: {describe_current_state}
 
@@ -130,7 +130,7 @@ Please help update the GitHub Actions workflows.
 
 ## CRD Changes
 ```
-I need to modify the AlertReaction CRD in the k8s-alert-reaction-operator.
+I need to modify the AlertReaction CRD in Karo (Kubernetes Alert Reaction Operator).
 
 Current structure: {describe_current_crd}
 

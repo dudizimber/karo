@@ -1,6 +1,6 @@
-# Contributing to Alert Reaction Operator
+# Contributing to Karo
 
-Thank you for your interest in contributing to the Alert Reaction Operator! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to Karo (Kubernetes Alert Reaction Operator)! This document provides guidelines and information for contributors.
 
 ## Code of Conduct
 
@@ -21,8 +21,8 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 1. **Fork and Clone**
    ```bash
    # Fork the repository on GitHub
-   git clone https://github.com/dudizimber/k8s-alert-reaction-operator.git
-   cd k8s-alert-reaction-operator
+   git clone https://github.com/dudizimber/karo.git
+   cd karo
    ```
 
 2. **Install Dependencies**
@@ -267,7 +267,7 @@ Releases are managed by maintainers:
 ## Project Structure
 
 ```
-k8s-alert-reaction-operator/
+karo/
 ├── api/v1/                     # API definitions
 ├── controllers/                # Controller implementations
 ├── webhook/                    # Webhook server
@@ -306,9 +306,9 @@ Report security vulnerabilities privately to:
 
 ## Getting Help
 
-- **Documentation**: Check [README](README.md) and [Wiki](https://github.com/dudizimber/k8s-alert-reaction-operator/wiki)
-- **Discussions**: [GitHub Discussions](https://github.com/dudizimber/k8s-alert-reaction-operator/discussions)
-- **Issues**: [GitHub Issues](https://github.com/dudizimber/k8s-alert-reaction-operator/issues)
+- **Documentation**: Check [README](README.md) and [Wiki](https://github.com/dudizimber/karo/wiki)
+- **Discussions**: [GitHub Discussions](https://github.com/dudizimber/karo/discussions)
+- **Issues**: [GitHub Issues](https://github.com/dudizimber/karo/issues)
 
 ## Maintainers
 
@@ -320,4 +320,6 @@ By contributing, you agree that your contributions will be licensed under the Ap
 
 ---
 
-Thank you for contributing to the Alert Reaction Operator! 🎉
+Thank you for contributing to Karo! 🎉
+
+````

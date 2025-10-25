@@ -81,4 +81,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Manual CRD installation requirement for users
 - Release job from CI/CD pipeline (moved to separate workflow)
 
-[Unreleased]: https://github.com/dudizimber/k8s-alert-reaction-operator/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/dudizimber/karo/compare/v0.1.0...HEAD
