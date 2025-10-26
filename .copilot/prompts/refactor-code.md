@@ -1,7 +1,11 @@
 # Refactor Code Prompt Template
 
 ## Context
-I'm working on refactoring code in the k8s-alert-reaction-operator to improve maintainability, readability, and code quality. The operator is built with Go 1.24+ and controller-runtime.
+# Refactor Code Prompt Template
+
+## Prompt
+```
+I'm working on refactoring code in Karo (Kubernetes Alert Reaction Operator) to improve maintainability, readability, and code quality. The operator is built with Go 1.24+ and controller-runtime.
 
 ## Refactoring Target
 **Code to refactor:**

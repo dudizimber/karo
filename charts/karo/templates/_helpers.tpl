@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "alert-reaction-operator.name" -}}
+{{- define "karo.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "alert-reaction-operator.fullname" -}}
+{{- define "karo.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "alert-reaction-operator.chart" -}}
+{{- define "karo.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "alert-reaction-operator.labels" -}}
-helm.sh/chart: {{ include "alert-reaction-operator.chart" . }}
-{{ include "alert-reaction-operator.selectorLabels" . }}
+{{- define "karo.labels" -}}
+helm.sh/chart: {{ include "karo.chart" . }}
+{{ include "karo.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -48,17 +48,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "alert-reaction-operator.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "alert-reaction-operator.name" . }}
+{{- define "karo.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "karo.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "alert-reaction-operator.serviceAccountName" -}}
+{{- define "karo.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "alert-reaction-operator.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "karo.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -67,7 +67,7 @@ Create the name of the service account to use
 {{/*
 Get the image name
 */}}
-{{- define "alert-reaction-operator.image" -}}
+{{- define "karo.image" -}}
 {{- $tag := .Values.image.tag | default .Chart.AppVersion }}
 {{- printf "%s:%s" .Values.image.repository $tag }}
 {{- end }}
@@ -75,7 +75,7 @@ Get the image name
 {{/*
 Common annotations
 */}}
-{{- define "alert-reaction-operator.annotations" -}}
+{{- define "karo.annotations" -}}
 {{- with .Values.commonAnnotations }}
 {{ toYaml . }}
 {{- end }}
@@ -84,13 +84,13 @@ Common annotations
 {{/*
 Webhook service name
 */}}
-{{- define "alert-reaction-operator.webhookServiceName" -}}
-{{- printf "%s-webhook" (include "alert-reaction-operator.fullname" .) }}
+{{- define "karo.webhookServiceName" -}}
+{{- printf "%s-webhook" (include "karo.fullname" .) }}
 {{- end }}
 
 {{/*
 Metrics service name
 */}}
-{{- define "alert-reaction-operator.metricsServiceName" -}}
-{{- printf "%s-metrics" (include "alert-reaction-operator.fullname" .) }}
+{{- define "karo.metricsServiceName" -}}
+{{- printf "%s-metrics" (include "karo.fullname" .) }}
 {{- end }}

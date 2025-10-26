@@ -1,6 +1,6 @@
 apiVersion: v2
-name: alert-reaction-operator
-description: A Kubernetes operator that creates Jobs in response to Prometheus alerts
+name: karo
+description: Karo (Kubernetes Alert Reaction Operator) - creates Jobs in response to Prometheus alerts
 type: application
 version: 0.1.0
 appVersion: "latest"
@@ -20,10 +20,11 @@ keywords:
   - incident-response
   - webhooks
   - crd
+  - karo
 
-home: https://github.com/dudizimber/k8s-alert-reaction-operator
+home: https://github.com/dudizimber/karo
 sources:
-  - https://github.com/dudizimber/k8s-alert-reaction-operator
+  - https://github.com/dudizimber/karo
 
 maintainers:
   - name: David Zimberknopf
@@ -49,13 +50,13 @@ annotations:
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/prerelease: "false"
   artifacthub.io/images: |
-    - name: alert-reaction-operator
-      image: docker.io/dudizimber/k8s-alert-reaction-operator:latest
+    - name: karo
+      image: docker.io/dudizimber/karo:latest
   artifacthub.io/links: |
     - name: Chart Source
-      url: https://github.com/dudizimber/k8s-alert-reaction-operator/tree/main/charts/alert-reaction-operator
+      url: https://github.com/dudizimber/karo/tree/main/charts/karo
     - name: Official Actions Repository
-      url: https://github.com/dudizimber/alert-reactions
+      url: https://github.com/dudizimber/karo-reactions
   artifacthub.io/changes: |
     - kind: added
       description: Initial Helm chart release
@@ -65,6 +66,6 @@ annotations:
       description: Webhook endpoint for Prometheus/Alertmanager integration
   
   # Chart metadata
-  charts.openshift.io/name: "Alert Reaction Operator"
+  charts.openshift.io/name: "Karo"
   charts.openshift.io/provider: "Community"
-  charts.openshift.io/supportURL: "https://github.com/dudizimber/k8s-alert-reaction-operator/issues"
+  charts.openshift.io/supportURL: "https://github.com/dudizimber/karo/issues"

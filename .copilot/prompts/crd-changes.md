@@ -1,7 +1,11 @@
 # CRD Changes Prompt Template
 
 ## Context
-I'm working on the k8s-alert-reaction-operator, a Kubernetes operator that uses a custom AlertReaction CRD. The CRD currently supports Prometheus-style matchers and defines how alerts should trigger Kubernetes Jobs.
+# CRD Changes Prompt Template
+
+## Prompt
+```
+I'm working on Karo (Kubernetes Alert Reaction Operator), a Kubernetes operator that uses a custom AlertReaction CRD. The CRD currently supports Prometheus-style matchers and defines how alerts should trigger Kubernetes Jobs.
 
 ## Current CRD Structure
 **Current AlertReaction spec:**
@@ -70,7 +74,7 @@ type Action struct {
 
 **Example configuration:**
 ```yaml
-apiVersion: alertreaction.io/v1alpha1
+apiVersion: karo.io/v1alpha1
 kind: AlertReaction
 metadata:
   name: example-with-new-fields
@@ -109,7 +113,7 @@ spec:
 - [ ] OpenAPI schema markers for basic validation
 
 **Generated manifests:**
-- [ ] `config/crd/bases/alertreaction.io_alertreactions.yaml` - Generated after `make manifests`
+- [ ] `config/crd/bases/karo.io_alertreactions.yaml` - Generated after `make manifests`
 
 **Tests:**
 - [ ] Unit tests for new API types

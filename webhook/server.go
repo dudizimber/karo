@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/dudizimber/k8s-alert-reaction-operator/controllers"
+	"github.com/dudizimber/karo/controllers"
 )
 
 // AlertManagerWebhook represents an AlertManager webhook payload
@@ -192,10 +192,10 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: 'k8s-alert-reaction-operator'
+  receiver: 'karo'
 
 receivers:
-- name: 'k8s-alert-reaction-operator'
+- name: 'karo'
   webhook_configs:
   - url: '%s'
     send_resolved: false

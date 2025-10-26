@@ -34,8 +34,8 @@ print_header() {
 
 # Function to create initial CHANGELOG.md
 create_initial_changelog() {
-    local project_name=${1:-"Alert Reaction Operator"}
-    local repo_url=${2:-"https://github.com/dudizimber/k8s-alert-reaction-operator"}
+    local project_name=${1:-"Karo"}
+    local repo_url=${2:-"https://github.com/dudizimber/karo"}
     
     cat > "$CHANGELOG_FILE" << EOF
 # Changelog
@@ -183,7 +183,7 @@ update_comparison_links() {
     if git remote get-url origin >/dev/null 2>&1; then
         repo_url=$(git remote get-url origin | sed 's/\.git$//' | sed 's/git@github.com:/https:\/\/github.com\//')
     else
-        repo_url="https://github.com/dudizimber/k8s-alert-reaction-operator"
+        repo_url="https://github.com/dudizimber/karo"
     fi
     
     # Check if comparison links section exists

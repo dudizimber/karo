@@ -1,14 +1,19 @@
-# Alert Reaction Operator
+<div align="center">
+  <img src="docs/images/karo-logo.png" alt="Karo Logo" width="600">
+  
+  # Karo - Kubernetes Alert Reaction Operator
 
-[![CI/CD Pipeline](https://github.com/dudizimber/k8s-alert-reaction-operator/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/dudizimber/k8s-alert-reaction-operator/actions/workflows/ci-cd.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/dudizimber/k8s-alert-reaction-operator)](https://goreportcard.com/report/github.com/dudizimber/k8s-alert-reaction-operator)
+[![CI/CD Pipeline](https://github.com/dudizimber/karo/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/dudizimber/karo/actions/workflows/ci-cd.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dudizimber/karo)](https://goreportcard.com/report/github.com/dudizimber/karo)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 A Kubernetes operator that creates Jobs in response to Prometheus alerts received via AlertManager webhooks.
 
+</div>
+
 ## Overview
 
-The Alert Reaction Operator bridges the gap between monitoring and automated remediation by allowing you to define specific actions (Kubernetes Jobs) that should be executed when certain alerts are triggered. This enables automatic incident response, scaling actions, diagnostic data collection, and other reactive operations.
+Karo (Kubernetes Alert Reaction Operator) bridges the gap between monitoring and automated remediation by allowing you to define specific actions (Kubernetes Jobs) that should be executed when certain alerts are triggered. This enables automatic incident response, scaling actions, diagnostic data collection, and other reactive operations.
 
 ### Key Features
 
@@ -24,8 +29,8 @@ The Alert Reaction Operator bridges the gap between monitoring and automated rem
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
-│   Prometheus    │    │   AlertManager   │    │ Alert Reaction      │
-│                 │───▶│                  │───▶│ Operator            │
+│   Prometheus    │    │   AlertManager   │    │ Karo                │
+│                 │───▶│                  │───▶│ (Alert Reaction)    │
 │   (Monitoring)  │    │   (Webhook)      │    │                     │
 └─────────────────┘    └──────────────────┘    └─────────────────────┘
                                                           │
@@ -56,15 +61,15 @@ The Alert Reaction Operator bridges the gap between monitoring and automated rem
 
 ```bash
 # Install with default configuration
-helm install alert-reaction-operator ./charts/alert-reaction-operator
+helm install karo ./charts/karo
 
 # Install for development
-helm install alert-reaction-operator ./charts/alert-reaction-operator \
-  -f ./charts/alert-reaction-operator/values-dev.yaml
+helm install karo ./charts/karo \
+  -f ./charts/karo/values-dev.yaml
 
 # Install for production
-helm install alert-reaction-operator ./charts/alert-reaction-operator \
-  -f ./charts/alert-reaction-operator/values-prod.yaml \
+helm install karo ./charts/karo \
+  -f ./charts/karo/values-prod.yaml \
   --namespace monitoring --create-namespace
 ```
 
@@ -105,19 +110,19 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: 'alert-reaction-webhook'
+  receiver: 'karo-webhook'
 
 receivers:
-- name: 'alert-reaction-webhook'
+- name: 'karo-webhook'
   webhook_configs:
-  - url: 'http://alert-reaction-operator-webhook.default.svc.cluster.local:9090/webhook'
+  - url: 'http://karo-webhook.default.svc.cluster.local:9090/webhook'
     send_resolved: true
 ```
 
 2. **Create an AlertReaction** resource to define responses:
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: high-cpu-reaction
@@ -146,7 +151,7 @@ spec:
 scripts/test-webhook.sh http://localhost:9090/webhook
 
 # Check created jobs
-kubectl get jobs -l alert-reaction/alert-name=HighCPUUsage
+kubectl get jobs -l karo/alert-name=HighCPUUsage
 ```
 
 ## Configuration
@@ -156,7 +161,7 @@ kubectl get jobs -l alert-reaction/alert-name=HighCPUUsage
 The `AlertReaction` CRD defines how the operator should respond to specific alerts:
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: example-reaction
@@ -212,7 +217,7 @@ Environment variables support dynamic values from alert data:
 #### Example 1: Database Backup on Critical Alert
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: database-backup-reaction
@@ -234,7 +239,7 @@ spec:
 #### Example 2: Auto-scaling Response
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: scale-up-reaction
@@ -255,7 +260,7 @@ spec:
 #### Example 3: Diagnostic Collection
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: diagnostics-reaction
@@ -286,7 +291,7 @@ spec:
 #### Example 4: Volume Mounting and Service Accounts
 
 ```yaml
-apiVersion: alertreaction.io/v1
+apiVersion: karo.io/v1
 kind: AlertReaction
 metadata:
   name: volume-example-reaction
@@ -436,11 +441,11 @@ subjects:
 
 ### Pre-built Alert Reactions
 
-The [**dudizimber/alert-reactions**](https://github.com/dudizimber/alert-reactions) repository provides a curated collection of production-ready AlertReaction manifests for common operational scenarios.
+The [**dudizimber/karo-reactions**](https://github.com/dudizimber/karo-reactions) repository provides a curated collection of production-ready AlertReaction manifests for common operational scenarios.
 
 #### Using Official Actions
 
-1. **Browse Available Actions**: Visit [dudizimber/alert-reactions](https://github.com/dudizimber/alert-reactions) to explore all available reactions
+1. **Browse Available Actions**: Visit [dudizimber/karo-reactions](https://github.com/dudizimber/karo-reactions) to explore all available reactions
 2. **Review Configuration**: Each action includes detailed configuration examples and prerequisites
 3. **Customize for Your Environment**: Modify resource limits, image versions, and environment-specific settings
 4. **Deploy**: Apply the manifests to your cluster using `kubectl` or your GitOps workflow
@@ -451,7 +456,7 @@ Help grow the official actions library:
 
 ```bash
 # Fork the repository
-gh repo fork dudizimber/alert-reactions
+gh repo fork dudizimber/karo-reactions
 
 # Create a new action category
 mkdir -p my-category/my-action
@@ -467,13 +472,13 @@ mkdir -p my-category/my-action
 #### Check Operator Status
 ```bash
 # Check deployment status
-kubectl get deployment alert-reaction-operator -n default
+kubectl get deployment karo -n default
 
 # View operator logs
-kubectl logs -l app.kubernetes.io/name=alert-reaction-operator -n default -f
+kubectl logs -l app.kubernetes.io/name=karo -n default -f
 
 # Check webhook service
-kubectl get svc alert-reaction-operator-webhook -n default
+kubectl get svc karo-webhook -n default
 ```
 
 #### View AlertReaction Resources
@@ -491,10 +496,10 @@ kubectl get alertreactions -o custom-columns="NAME:.metadata.name,ALERT:.spec.al
 #### Monitor Created Jobs
 ```bash
 # List jobs created by the operator
-kubectl get jobs -l alert-reaction/alert-name
+kubectl get jobs -l karo/alert-name
 
 # View jobs for a specific alert
-kubectl get jobs -l alert-reaction/alert-name=HighCPUUsage
+kubectl get jobs -l karo/alert-name=HighCPUUsage
 
 # Check job status with details
 kubectl get jobs -o wide
@@ -506,7 +511,7 @@ The operator exposes Prometheus metrics on port 8080:
 
 ```bash
 # Port forward to access metrics
-kubectl port-forward svc/alert-reaction-operator-metrics 8080:8080
+kubectl port-forward svc/karo-metrics 8080:8080
 
 # View metrics
 curl http://localhost:8080/metrics
@@ -526,11 +531,11 @@ curl http://localhost:8080/metrics
 **1. Webhook not receiving alerts**
 ```bash
 # Check service and endpoint
-kubectl get svc alert-reaction-operator-webhook
-kubectl get endpoints alert-reaction-operator-webhook
+kubectl get svc karo-webhook
+kubectl get endpoints karo-webhook
 
 # Test webhook manually
-kubectl port-forward svc/alert-reaction-operator-webhook 9090:9090
+kubectl port-forward svc/karo-webhook 9090:9090
 curl -X POST http://localhost:9090/webhook \
   -H "Content-Type: application/json" \
   -d '{"alerts":[{"labels":{"alertname":"TestAlert"}}]}'
@@ -545,33 +550,33 @@ kubectl get alertreactions
 kubectl get alertreaction <name> -o jsonpath='{.spec.alertName}'
 
 # Check operator logs for errors
-kubectl logs -l app.kubernetes.io/name=alert-reaction-operator
+kubectl logs -l app.kubernetes.io/name=karo
 ```
 
 **3. Permission issues**
 ```bash
 # Check RBAC
-kubectl get clusterrole alert-reaction-operator
-kubectl get clusterrolebinding alert-reaction-operator
+kubectl get clusterrole karo
+kubectl get clusterrolebinding karo
 
 # Verify service account
-kubectl get serviceaccount alert-reaction-operator
+kubectl get serviceaccount karo
 ```
 
 #### Debug Commands
 
 ```bash
 # Get all operator-related resources
-kubectl get all -l app.kubernetes.io/name=alert-reaction-operator
+kubectl get all -l app.kubernetes.io/name=karo
 
 # Check events for issues
-kubectl get events --field-selector involvedObject.name=alert-reaction-operator
+kubectl get events --field-selector involvedObject.name=karo
 
 # Describe operator deployment
-kubectl describe deployment alert-reaction-operator
+kubectl describe deployment karo
 
 # Test webhook health
-curl http://alert-reaction-operator-webhook.default.svc.cluster.local:9090/health
+curl http://karo-webhook.default.svc.cluster.local:9090/health
 ```
 
 ## Development
@@ -588,8 +593,8 @@ curl http://alert-reaction-operator-webhook.default.svc.cluster.local:9090/healt
 
 ```bash
 # Clone the repository
-git clone https://github.com/dudizimber/k8s-alert-reaction-operator.git
-cd k8s-alert-reaction-operator
+git clone https://github.com/dudizimber/karo.git
+cd karo
 
 # Set up development environment (including git hooks)
 ./scripts/setup-hooks.sh
@@ -601,7 +606,7 @@ make build
 make test
 
 # Build Docker image
-make docker-build IMG=dudizimber/alert-reaction-operator:latest
+make docker-build IMG=dudizimber/karo:latest
 ```
 
 ### Git Hooks
@@ -711,15 +716,15 @@ When you publish a draft release, the Helm automation automatically:
 
 ```bash
 # From OCI Registry (Recommended)
-helm install alert-reaction-operator oci://ghcr.io/dudizimber/charts/alert-reaction-operator --version 1.0.0
+helm install karo oci://ghcr.io/dudizimber/charts/karo --version 1.0.0
 
 # From Helm Repository  
-helm repo add alert-reaction-operator https://dudizimber.github.io/k8s-alert-reaction-operator/
-helm install alert-reaction-operator alert-reaction-operator/alert-reaction-operator --version 1.0.0
+helm repo add karo https://dudizimber.github.io/karo/
+helm install karo karo/karo --version 1.0.0
 
 # From GitHub Release Assets
-curl -L https://github.com/dudizimber/k8s-alert-reaction-operator/releases/download/v1.0.0/alert-reaction-operator-1.0.0.tgz -o chart.tgz
-helm install alert-reaction-operator ./chart.tgz
+curl -L https://github.com/dudizimber/karo/releases/download/v1.0.0/karo-1.0.0.tgz -o chart.tgz
+helm install karo ./chart.tgz
 ```
 
 #### CHANGELOG Management
@@ -775,9 +780,9 @@ The operator requires minimal permissions:
 
 ```yaml
 # AlertReaction CRD management
-- alertreaction.io: alertreactions (all verbs)
-- alertreaction.io: alertreactions/status (get, update, patch)
-- alertreaction.io: alertreactions/finalizers (update)
+- karo.io: alertreactions (all verbs)
+- karo.io: alertreactions/status (get, update, patch)
+- karo.io: alertreactions/finalizers (update)
 
 # Job management
 - batch: jobs (all verbs)
@@ -807,11 +812,11 @@ Example network policy to restrict webhook access:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: alert-reaction-operator
+  name: karo
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: alert-reaction-operator
+      app.kubernetes.io/name: karo
   policyTypes:
   - Ingress
   ingress:
@@ -833,7 +838,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 1. **Fork the repository**
 2. **Clone your fork**
    ```bash
-   git clone https://github.com/dudizimber/k8s-alert-reaction-operator.git
+   git clone https://github.com/dudizimber/karo.git
    ```
 3. **Create a feature branch**
    ```bash
@@ -879,9 +884,9 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Support
 
-- **Documentation**: [GitHub Wiki](https://github.com/dudizimber/k8s-alert-reaction-operator/wiki)
-- **Issues**: [GitHub Issues](https://github.com/dudizimber/k8s-alert-reaction-operator/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/dudizimber/k8s-alert-reaction-operator/discussions)
+- **Documentation**: [GitHub Wiki](https://github.com/dudizimber/karo/wiki)
+- **Issues**: [GitHub Issues](https://github.com/dudizimber/karo/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/dudizimber/karo/discussions)
 
 ## Acknowledgments
 

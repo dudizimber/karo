@@ -2,7 +2,10 @@
 
 set -e
 
-echo "Uninstalling Kubernetes Alert Reaction Operator..."
+#!/bin/bash
+
+# Uninstall script for Karo
+echo "Uninstalling Karo (Kubernetes Alert Reaction Operator)..."
 
 # Delete examples if they exist
 echo "Removing example AlertReaction resources..."
@@ -18,7 +21,7 @@ kubectl delete -f config/rbac/rbac.yaml --ignore-not-found=true
 
 # Delete CRD (this will also delete all AlertReaction resources)
 echo "Removing Custom Resource Definition..."
-kubectl delete -f config/crd/alertreaction.io_alertreactions.yaml --ignore-not-found=true
+kubectl delete -f config/crd/karo.io_alertreactions.yaml --ignore-not-found=true
 
 echo ""
-echo "Alert Reaction Operator has been uninstalled successfully!"
+echo "Karo has been uninstalled successfully!"

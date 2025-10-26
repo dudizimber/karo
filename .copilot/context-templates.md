@@ -2,7 +2,7 @@
 
 ## Full Project Context
 ```
-I'm working on the k8s-alert-reaction-operator, a Kubernetes operator that:
+I'm working on Karo (Kubernetes Alert Reaction Operator), a Kubernetes operator that:
 
 **Purpose**: Creates Kubernetes Jobs in response to Prometheus alerts received via AlertManager webhooks
 
@@ -57,7 +57,7 @@ This is a Kubernetes operator built with:
 
 ## Alert Processing Context
 ```
-The k8s-alert-reaction-operator processes alerts with this workflow:
+Karo (Kubernetes Alert Reaction Operator) processes alerts with this workflow:
 
 1. **Alert Reception**: AlertManager sends webhook to /webhook endpoint
 2. **Alert Parsing**: Extract labels, annotations, status from Prometheus alert
@@ -80,7 +80,7 @@ The k8s-alert-reaction-operator processes alerts with this workflow:
 
 ## Testing Context  
 ```
-The k8s-alert-reaction-operator uses comprehensive testing:
+Karo (Kubernetes Alert Reaction Operator) uses comprehensive testing:
 
 **Test Structure**:
 - Table-driven tests for multiple scenarios

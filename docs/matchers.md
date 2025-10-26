@@ -90,7 +90,7 @@ matchers:
 
 ### Complex Real-World Example
 ```yaml
-apiVersion: alertreaction.io/v1alpha1
+apiVersion: karo.io/v1alpha1
 kind: AlertReaction
 metadata:
   name: production-critical-alerts

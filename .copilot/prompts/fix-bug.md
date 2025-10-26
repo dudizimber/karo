@@ -1,7 +1,11 @@
 # Bug Fix Prompt Template
 
 ## Context
-I'm working on the k8s-alert-reaction-operator, a Kubernetes operator built with Go 1.24+ and controller-runtime. The operator processes Prometheus alerts via webhooks and creates Kubernetes Jobs based on AlertReaction CRDs with Prometheus-style matchers.
+# Bug Fix Prompt Template
+
+## Prompt
+```
+I'm working on Karo (Kubernetes Alert Reaction Operator), a Kubernetes operator built with Go 1.24+ and controller-runtime. The operator processes Prometheus alerts via webhooks and creates Kubernetes Jobs based on AlertReaction CRDs with Prometheus-style matchers.
 
 ## Bug Report
 **Issue:** {bug_title}

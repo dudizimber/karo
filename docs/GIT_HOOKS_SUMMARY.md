@@ -1,7 +1,7 @@
 # Git Hooks Implementation Summary
 
 ## Overview
-Successfully implemented a comprehensive git hooks system for the k8s-alert-reaction-operator project to ensure automated code quality enforcement before commits and pushes.
+Successfully implemented a comprehensive git hooks system for the Karo (Kubernetes Alert Reaction Operator) project to ensure automated code quality enforcement before commits and pushes.
 
 ## Implemented Hooks
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pre-commit Git hook for the k8s-alert-reaction-operator
+# Pre-commit Git hook for Karo (Kubernetes Alert Reaction Operator)
 # This hook runs formatting, linting, and basic checks before allowing commits
 
 set -e

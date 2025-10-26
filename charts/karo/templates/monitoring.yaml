@@ -2,10 +2,10 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "alert-reaction-operator.fullname" . }}
+  name: {{ include "karo.fullname" . }}
   namespace: {{ default .Release.Namespace .Values.monitoring.serviceMonitor.namespace }}
   labels:
-    {{- include "alert-reaction-operator.labels" . | nindent 4 }}
+    {{- include "karo.labels" . | nindent 4 }}
   {{- with .Values.monitoring.serviceMonitor.labels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -13,13 +13,13 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with include "alert-reaction-operator.annotations" . }}
+  {{- with include "karo.annotations" . }}
     {{- . | nindent 4 }}
   {{- end }}
 spec:
   selector:
     matchLabels:
-      {{- include "alert-reaction-operator.selectorLabels" . | nindent 6 }}
+      {{- include "karo.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: metrics
   endpoints:
   - port: metrics
@@ -35,10 +35,10 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: {{ include "alert-reaction-operator.fullname" . }}
+  name: {{ include "karo.fullname" . }}
   namespace: {{ default .Release.Namespace .Values.monitoring.prometheusRule.namespace }}
   labels:
-    {{- include "alert-reaction-operator.labels" . | nindent 4 }}
+    {{- include "karo.labels" . | nindent 4 }}
   {{- with .Values.monitoring.prometheusRule.labels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -46,39 +46,39 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with include "alert-reaction-operator.annotations" . }}
+  {{- with include "karo.annotations" . }}
     {{- . | nindent 4 }}
   {{- end }}
 spec:
   groups:
-  - name: alert-reaction-operator
+  - name: karo
     rules:
-    - alert: AlertReactionOperatorDown
-      expr: up{job="alert-reaction-operator"} == 0
+    - alert: KaroDown
+      expr: up{job="karo"} == 0
       for: 5m
       labels:
         severity: critical
       annotations:
-        summary: "Alert Reaction Operator is down"
-        description: "Alert Reaction Operator has been down for more than 5 minutes."
+        summary: "Karo is down"
+        description: "Karo has been down for more than 5 minutes."
     
-    - alert: AlertReactionOperatorHighMemory
-      expr: process_resident_memory_bytes{job="alert-reaction-operator"} / 1024 / 1024 > 100
+    - alert: KaroHighMemory
+      expr: process_resident_memory_bytes{job="karo"} / 1024 / 1024 > 100
       for: 10m
       labels:
         severity: warning
       annotations:
-        summary: "Alert Reaction Operator high memory usage"
-        description: "Alert Reaction Operator is using more than 100MB of memory."
+        summary: "Karo high memory usage"
+        description: "Karo is using more than 100MB of memory."
     
-    - alert: AlertReactionOperatorHighCPU
-      expr: rate(process_cpu_seconds_total{job="alert-reaction-operator"}[5m]) * 100 > 80
+    - alert: KaroHighCPU
+      expr: rate(process_cpu_seconds_total{job="karo"}[5m]) * 100 > 80
       for: 10m
       labels:
         severity: warning
       annotations:
-        summary: "Alert Reaction Operator high CPU usage"
-        description: "Alert Reaction Operator is using more than 80% CPU."
+        summary: "Karo high CPU usage"
+        description: "Karo is using more than 80% CPU."
     
     {{- if .Values.monitoring.prometheusRule.rules }}
     {{- toYaml .Values.monitoring.prometheusRule.rules | nindent 4 }}

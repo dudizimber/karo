@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= dudizimber/alert-reaction-operator:latest
+IMG ?= dudizimber/karo:latest
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -104,7 +104,7 @@ delete-examples: ## Delete example AlertReaction resources.
 
 .PHONY: logs
 logs: ## Show logs from the operator pod.
-	kubectl logs -l app=alert-reaction-operator -f
+	kubectl logs -l app=karo -f
 
 .PHONY: status
 status: ## Show status of AlertReaction resources.
@@ -112,7 +112,7 @@ status: ## Show status of AlertReaction resources.
 
 .PHONY: jobs
 jobs: ## Show jobs created by the operator.
-	kubectl get jobs -l app.kubernetes.io/name=alert-reaction-job
+	kubectl get jobs -l app.kubernetes.io/name=karo-job
 
 .PHONY: clean
 clean: ## Clean up build artifacts.

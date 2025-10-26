@@ -15,8 +15,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	alertreactionv1alpha1 "github.com/dudizimber/k8s-alert-reaction-operator/api/v1alpha1"
-	"github.com/dudizimber/k8s-alert-reaction-operator/controllers"
+	alertreactionv1alpha1 "github.com/dudizimber/karo/api/v1alpha1"
+	"github.com/dudizimber/karo/controllers"
 )
 
 func setupWebhookTest() (*WebhookServer, *controllers.AlertReactionReconciler) {
@@ -82,7 +82,7 @@ func TestWebhookServer_HandleWebhook_ValidPayload(t *testing.T) {
 		Version:  "4",
 		GroupKey: "{}:{alertname=\"HighCPUUsage\"}",
 		Status:   "firing",
-		Receiver: "k8s-alert-reaction-operator",
+		Receiver: "karo",
 		GroupLabels: map[string]string{
 			"alertname": "HighCPUUsage",
 		},
@@ -193,7 +193,7 @@ func TestWebhookServer_HandleWebhook_NonFiringAlert(t *testing.T) {
 	webhook := AlertManagerWebhook{
 		Version:  "4",
 		Status:   "resolved",
-		Receiver: "k8s-alert-reaction-operator",
+		Receiver: "karo",
 		Alerts: []Alert{
 			{
 				Status: "resolved",
@@ -337,7 +337,7 @@ func TestWebhookServer_GetWebhookConfig(t *testing.T) {
 
 	// Check that the config contains expected elements
 	expectedStrings := []string{
-		"k8s-alert-reaction-operator",
+		"karo",
 		"http://example.com:9090/webhook",
 		"send_resolved: false",
 		"timeout: 10s",

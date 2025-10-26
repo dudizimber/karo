@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "alert-reaction-operator.webhookServiceName" . }}
+  name: {{ include "karo.webhookServiceName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "alert-reaction-operator.labels" . | nindent 4 }}
+    {{- include "karo.labels" . | nindent 4 }}
     app.kubernetes.io/component: webhook
   {{- with .Values.service.webhook.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with include "alert-reaction-operator.annotations" . }}
+  {{- with include "karo.annotations" . }}
     {{- . | nindent 4 }}
   {{- end }}
 spec:
@@ -21,22 +21,22 @@ spec:
     targetPort: webhook
     protocol: TCP
   selector:
-    {{- include "alert-reaction-operator.selectorLabels" . | nindent 4 }}
+    {{- include "karo.selectorLabels" . | nindent 4 }}
 ---
 {{- if .Values.operator.metrics.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "alert-reaction-operator.metricsServiceName" . }}
+  name: {{ include "karo.metricsServiceName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "alert-reaction-operator.labels" . | nindent 4 }}
+    {{- include "karo.labels" . | nindent 4 }}
     app.kubernetes.io/component: metrics
   {{- with .Values.service.metrics.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with include "alert-reaction-operator.annotations" . }}
+  {{- with include "karo.annotations" . }}
     {{- . | nindent 4 }}
   {{- end }}
 spec:
@@ -47,5 +47,5 @@ spec:
     targetPort: metrics
     protocol: TCP
   selector:
-    {{- include "alert-reaction-operator.selectorLabels" . | nindent 4 }}
+    {{- include "karo.selectorLabels" . | nindent 4 }}
 {{- end }}

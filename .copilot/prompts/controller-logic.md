@@ -1,7 +1,11 @@
 # Controller Logic Prompt Template
 
 ## Context
-I'm working on the k8s-alert-reaction-operator controller logic. The controller uses controller-runtime to reconcile AlertReaction resources and creates Jobs based on incoming Prometheus alerts via webhooks.
+# Controller Logic Prompt Template
+
+## Prompt
+```
+I'm working on the Karo (Kubernetes Alert Reaction Operator) controller logic. The controller uses controller-runtime to reconcile AlertReaction resources and creates Jobs based on incoming Prometheus alerts via webhooks.
 
 ## Current Controller Architecture
 **Main reconciliation function:** `Reconcile(ctx context.Context, req ctrl.Request)`

@@ -1,6 +1,6 @@
 # Example values for production environment
 image:
-  repository: docker.io/dudizimber/k8s-alert-reaction-operator
+  repository: docker.io/dudizimber/karo
   tag: "v0.1.0"  # Use specific version in production
   pullPolicy: IfNotPresent
 

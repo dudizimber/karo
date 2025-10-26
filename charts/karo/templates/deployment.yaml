@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "alert-reaction-operator.fullname" . }}
+  name: {{ include "karo.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "alert-reaction-operator.labels" . | nindent 4 }}
-  {{- with include "alert-reaction-operator.annotations" . }}
+    {{- include "karo.labels" . | nindent 4 }}
+  {{- with include "karo.annotations" . }}
   annotations:
     {{- . | nindent 4 }}
   {{- end }}
@@ -15,31 +15,31 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "alert-reaction-operator.selectorLabels" . | nindent 6 }}
+      {{- include "karo.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with include "alert-reaction-operator.annotations" . }}
+      {{- with include "karo.annotations" . }}
         {{- . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "alert-reaction-operator.selectorLabels" . | nindent 8 }}
+        {{- include "karo.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "alert-reaction-operator.serviceAccountName" . }}
+      serviceAccountName: {{ include "karo.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
       - name: manager
         securityContext:
           {{- toYaml .Values.securityContext | nindent 10 }}
-        image: {{ include "alert-reaction-operator.image" . }}
+        image: {{ include "karo.image" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         command:
         - /manager

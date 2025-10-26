@@ -1,6 +1,6 @@
 # Example values for development environment
 image:
-  repository: docker.io/dudizimber/k8s-alert-reaction-operator
+  repository: docker.io/dudizimber/karo
   tag: "latest"
   pullPolicy: Always
 
@@ -16,7 +16,7 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
   hosts:
-    - host: alert-reaction-dev.local
+    - host: karo-dev.local
       paths:
         - path: /
           pathType: Prefix

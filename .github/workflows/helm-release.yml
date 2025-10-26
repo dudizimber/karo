@@ -24,7 +24,7 @@ env:
   DOCKER_REGISTRY: docker.io
   HELM_REGISTRY: ghcr.io
   IMAGE_REPOSITORY: dudizimber
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: karo
 
 jobs:
   helm-release:
@@ -114,39 +114,39 @@ jobs:
       - name: Update Chart.yaml
         run: |
           # Update chart version and app version
-          sed -i "s/version: .*/version: ${{ steps.version.outputs.CHART_VERSION }}/" charts/alert-reaction-operator/Chart.yaml
-          sed -i "s/appVersion: .*/appVersion: \"${{ steps.version.outputs.APP_VERSION }}\"/" charts/alert-reaction-operator/Chart.yaml
+          sed -i "s/version: .*/version: ${{ steps.version.outputs.CHART_VERSION }}/" charts/karo/Chart.yaml
+          sed -i "s/appVersion: .*/appVersion: \"${{ steps.version.outputs.APP_VERSION }}\"/" charts/karo/Chart.yaml
           
           # Update home and sources URLs to use correct repository
-          sed -i "s|home: .*|home: https://github.com/${{ github.repository }}|" charts/alert-reaction-operator/Chart.yaml
-          sed -i "s|sources:.*|sources:|" charts/alert-reaction-operator/Chart.yaml
-          sed -i "/sources:/a\\  - https://github.com/${{ github.repository }}" charts/alert-reaction-operator/Chart.yaml
+          sed -i "s|home: .*|home: https://github.com/${{ github.repository }}|" charts/karo/Chart.yaml
+          sed -i "s|sources:.*|sources:|" charts/karo/Chart.yaml
+          sed -i "/sources:/a\\  - https://github.com/${{ github.repository }}" charts/karo/Chart.yaml
 
       - name: Update values.yaml with correct image
         run: |
           # Update the default image in values.yaml to use Docker Hub
-          sed -i "s|repository: .*|repository: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/k8s-alert-reaction-operator|" charts/alert-reaction-operator/values.yaml
-          sed -i "s|tag: .*|tag: \"${{ steps.version.outputs.VERSION }}\"|" charts/alert-reaction-operator/values.yaml
+          sed -i "s|repository: .*|repository: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/${{ env.IMAGE_NAME }}|" charts/karo/values.yaml
+          sed -i "s|tag: .*|tag: \"${{ steps.version.outputs.VERSION }}\"|" charts/karo/values.yaml
 
       - name: Bundle CRDs with chart
         run: |
           # Create crds directory in chart
-          mkdir -p charts/alert-reaction-operator/crds/
+          mkdir -p charts/karo/crds/
           
           # Copy CRDs from config/crd to chart crds directory
-          cp config/crd/*.yaml charts/alert-reaction-operator/crds/
+          cp config/crd/*.yaml charts/karo/crds/
           
           echo "✅ CRDs bundled with chart:"
-          ls -la charts/alert-reaction-operator/crds/
+          ls -la charts/karo/crds/
 
       - name: Lint Helm chart
         run: |
-          helm lint charts/alert-reaction-operator/
+          helm lint charts/karo/
 
       - name: Validate Helm chart
         run: |
           # Test template rendering
-          helm template test-release charts/alert-reaction-operator/ > /tmp/rendered-templates.yaml
+          helm template test-release charts/karo/ > /tmp/rendered-templates.yaml
           
           # Check if templates are valid YAML
           cat /tmp/rendered-templates.yaml | yq eval '.' > /dev/null
@@ -156,7 +156,7 @@ jobs:
       - name: Package Helm chart
         run: |
           mkdir -p .helm-charts
-          helm package charts/alert-reaction-operator/ --destination .helm-charts/
+          helm package charts/karo/ --destination .helm-charts/
           
           # Create chart index
           helm repo index .helm-charts/ --url https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.RELEASE_TAG }}/
@@ -168,10 +168,10 @@ jobs:
             echo "Manual dispatch with overwrite enabled - forcing push"
             # Note: Helm doesn't have a --force flag, but we can delete and push
             # This will fail silently if the chart doesn't exist
-            helm delete --namespace ghcr oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator:${{ steps.version.outputs.CHART_VERSION }} 2>/dev/null || true
+            helm delete --namespace ghcr oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/karo:${{ steps.version.outputs.CHART_VERSION }} 2>/dev/null || true
           fi
           
-          helm push .helm-charts/alert-reaction-operator-${{ steps.version.outputs.CHART_VERSION }}.tgz oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts
+          helm push .helm-charts/karo-${{ steps.version.outputs.CHART_VERSION }}.tgz oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts
 
       - name: Generate release notes
         id: release_notes
@@ -201,27 +201,27 @@ jobs:
           #### Install from OCI Registry (Recommended)
           \`\`\`bash
           # Install directly from GitHub Container Registry
-          helm install alert-reaction-operator oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}
+          helm install karo oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/karo --version ${{ steps.version.outputs.CHART_VERSION }}
           
           # Or with custom values
-          helm install alert-reaction-operator oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }} -f values.yaml
+          helm install karo oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/karo --version ${{ steps.version.outputs.CHART_VERSION }} -f values.yaml
           \`\`\`
           
           #### Install from Release Assets
           \`\`\`bash
           # Download and install from release assets
-          curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.RELEASE_TAG }}/alert-reaction-operator-${{ steps.version.outputs.CHART_VERSION }}.tgz -o alert-reaction-operator-${{ steps.version.outputs.CHART_VERSION }}.tgz
-          helm install alert-reaction-operator ./alert-reaction-operator-${{ steps.version.outputs.CHART_VERSION }}.tgz
+          curl -L https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.RELEASE_TAG }}/karo-${{ steps.version.outputs.CHART_VERSION }}.tgz -o karo-${{ steps.version.outputs.CHART_VERSION }}.tgz
+          helm install karo ./karo-${{ steps.version.outputs.CHART_VERSION }}.tgz
           \`\`\`
           
           ### Upgrade
           \`\`\`bash
           # Upgrade from OCI registry
-          helm upgrade alert-reaction-operator oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}
+          helm upgrade karo oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/karo --version ${{ steps.version.outputs.CHART_VERSION }}
           \`\`\`
           
           ### Container Images
-          - **Operator Image**: \`${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/k8s-alert-reaction-operator:${{ steps.version.outputs.VERSION }}\`
+          - **Operator Image**: \`${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}\`
           
           ### Chart Details
           - **Chart Version**: ${{ steps.version.outputs.CHART_VERSION }}
@@ -314,25 +314,25 @@ jobs:
           <!DOCTYPE html>
           <html>
           <head>
-            <title>Alert Reaction Operator Helm Repository</title>
+            <title>Karo Helm Repository</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 40px; }
               .code { background: #f4f4f4; padding: 10px; border-radius: 4px; }
             </style>
           </head>
           <body>
-            <h1>Alert Reaction Operator Helm Repository</h1>
-            <p>This is the official Helm repository for the Alert Reaction Operator.</p>
+            <h1>Karo (Kubernetes Alert Reaction Operator) Helm Repository</h1>
+            <p>This is the official Helm repository for Karo.</p>
             
             <h2>Add Repository</h2>
             <div class="code">
-              <code>helm repo add alert-reaction-operator https://${{ github.repository_owner }}.github.io/k8s-alert-reaction-operator/</code><br>
+              <code>helm repo add karo https://${{ github.repository_owner }}.github.io/karo/</code><br>
               <code>helm repo update</code>
             </div>
             
             <h2>Install Chart</h2>
             <div class="code">
-              <code>helm install my-operator alert-reaction-operator/alert-reaction-operator</code>
+              <code>helm install my-karo karo/karo</code>
             </div>
             
             <h2>Available Charts</h2>
@@ -375,14 +375,14 @@ jobs:
             echo "- **Overwrite**: ${{ steps.version.outputs.OVERWRITE_ENABLED }}" >> $GITHUB_STEP_SUMMARY
             echo "- **Skip gh-pages**: ${{ github.event.inputs.skip_gh_pages }}" >> $GITHUB_STEP_SUMMARY
           fi
-          echo "- **OCI Registry**: \`oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **OCI Registry**: \`oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/karo\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🚀 Installation Commands" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "# From OCI Registry" >> $GITHUB_STEP_SUMMARY
-          echo "helm install alert-reaction-operator oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "helm install karo oci://${{ env.HELM_REGISTRY }}/${{ github.repository_owner }}/charts/karo --version ${{ steps.version.outputs.CHART_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# From Helm Repository" >> $GITHUB_STEP_SUMMARY
-          echo "helm repo add alert-reaction-operator https://${{ github.repository_owner }}.github.io/k8s-alert-reaction-operator/" >> $GITHUB_STEP_SUMMARY
-          echo "helm install alert-reaction-operator alert-reaction-operator/alert-reaction-operator --version ${{ steps.version.outputs.CHART_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "helm repo add karo https://${{ github.repository_owner }}.github.io/karo/" >> $GITHUB_STEP_SUMMARY
+          echo "helm install karo karo/karo --version ${{ steps.version.outputs.CHART_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

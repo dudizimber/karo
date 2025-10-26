@@ -1,6 +1,6 @@
 # Release Branch Workflow
 
-This document describes the release branch workflow for the Alert Reaction Operator.
+This document describes the release branch workflow for Karo (Kubernetes Alert Reaction Operator).
 
 ## Overview
 

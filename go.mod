@@ -1,4 +1,4 @@
-module github.com/dudizimber/k8s-alert-reaction-operator
+module github.com/dudizimber/karo
 
 go 1.24.0
 

@@ -1,10 +1,10 @@
-# Default values for alert-reaction-operator.
+# Default values for karo.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 # Operator image configuration
 image:
-  repository: docker.io/dudizimber/k8s-alert-reaction-operator
+  repository: docker.io/dudizimber/karo
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -82,14 +82,14 @@ ingress:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: alert-reaction-operator.local
+    - host: karo.local
       paths:
         - path: /
           pathType: Prefix
   tls: []
-  #  - secretName: alert-reaction-operator-tls
+  #  - secretName: karo-tls
   #    hosts:
-  #      - alert-reaction-operator.local
+  #      - karo.local
 
 # Resource limits and requests
 resources:

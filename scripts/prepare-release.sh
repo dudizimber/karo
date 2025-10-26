@@ -331,7 +331,7 @@ create_release_branch() {
 show_usage() {
     echo "Usage: $0 [OPTIONS] [VERSION]"
     echo
-    echo "Create release branches and trigger release workflows for the Alert Reaction Operator."
+    echo "Create release branches and trigger release workflows for Karo."
     echo
     echo "OPTIONS:"
     echo "  -h, --help          Show this help message"

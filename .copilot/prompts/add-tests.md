@@ -1,7 +1,10 @@
 # Add Tests Prompt Template
 
-## Context
-I'm working on the k8s-alert-reaction-operator, a Kubernetes operator built with Go 1.24+ and controller-runtime. I need to add comprehensive tests following our project's testing patterns.
+# Add Tests Prompt Template
+
+## Prompt
+```
+I'm working on Karo (Kubernetes Alert Reaction Operator), a Kubernetes operator built with Go 1.24+ and controller-runtime. I need to add comprehensive tests following our project's testing patterns.
 
 ## Testing Target
 **Function/Feature to test:** {function_or_feature_name}

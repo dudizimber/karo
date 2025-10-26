@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Test script for the Alert Reaction Operator webhook endpoint
+# Test script for the Karo webhook endpoint
 # This script simulates AlertManager webhook calls for testing
 
 WEBHOOK_URL=${1:-"http://localhost:9090/webhook"}
 
-echo "Testing Alert Reaction Operator webhook at: $WEBHOOK_URL"
+echo "Testing Karo webhook at: $WEBHOOK_URL"
 
 # Test 1: High CPU Usage Alert
 echo ""
@@ -17,7 +17,7 @@ curl -X POST "$WEBHOOK_URL" \
     "groupKey": "{}:{alertname=\"HighCPUUsage\"}",
     "truncatedAlerts": 0,
     "status": "firing",
-    "receiver": "k8s-alert-reaction-operator",
+    "receiver": "karo",
     "groupLabels": {
       "alertname": "HighCPUUsage"
     },
@@ -66,7 +66,7 @@ curl -X POST "$WEBHOOK_URL" \
     "groupKey": "{}:{alertname=\"LowDiskSpace\"}",
     "truncatedAlerts": 0,
     "status": "firing",
-    "receiver": "k8s-alert-reaction-operator",
+    "receiver": "karo",
     "groupLabels": {
       "alertname": "LowDiskSpace"
     },
@@ -115,7 +115,7 @@ curl -X POST "$WEBHOOK_URL" \
     "groupKey": "{}:{alertname=\"PodCrashLooping\"}",
     "truncatedAlerts": 0,
     "status": "firing",
-    "receiver": "k8s-alert-reaction-operator",
+    "receiver": "karo",
     "groupLabels": {
       "alertname": "PodCrashLooping"
     },
@@ -163,4 +163,4 @@ curl -X GET "${WEBHOOK_URL%/webhook}/health"
 echo ""
 echo ""
 echo "Test completed! Check the operator logs to see if alerts were processed correctly."
-echo "You can also check for created jobs with: kubectl get jobs -l app.kubernetes.io/name=alert-reaction-job"
+echo "You can also check for created jobs with: kubectl get jobs -l app.kubernetes.io/name=karo-job"

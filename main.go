@@ -16,9 +16,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	alertreactionv1alpha1 "github.com/dudizimber/k8s-alert-reaction-operator/api/v1alpha1"
-	"github.com/dudizimber/k8s-alert-reaction-operator/controllers"
-	"github.com/dudizimber/k8s-alert-reaction-operator/webhook"
+	alertreactionv1alpha1 "github.com/dudizimber/karo/api/v1alpha1"
+	"github.com/dudizimber/karo/controllers"
+	"github.com/dudizimber/karo/webhook"
 )
 
 var (
@@ -57,7 +57,7 @@ func main() {
 		Metrics:                 metricsserver.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress:  probeAddr,
 		LeaderElection:          enableLeaderElection,
-		LeaderElectionID:        "f1c5ece8.alertreaction.io",
+		LeaderElectionID:        "f1c5ece8.karo.io",
 		LeaderElectionNamespace: "default",
 	})
 	if err != nil {
@@ -126,5 +126,5 @@ func main() {
 	setupLog.Info("Received termination signal, shutting down...")
 	cancel()
 
-	setupLog.Info("Alert Reaction Operator stopped")
+	setupLog.Info("Karo stopped")
 }

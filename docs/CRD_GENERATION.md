@@ -41,7 +41,7 @@ The Go structs use special comments (markers) that `controller-gen` reads to gen
 ### Package Level Markers
 ```go
 // +kubebuilder:object:generate=true
-// +groupName=alertreaction.io
+// +groupName=karo.io
 package v1
 ```
 
@@ -95,7 +95,7 @@ type AlertReaction struct {
 
 If `controller-gen` fails (due to parsing issues), you can manually update the CRD:
 
-1. Edit `config/crd/alertreaction.io_alertreactions.yaml`
+1. Edit `config/crd/karo.io_alertreactions.yaml`
 2. Add missing fields to the appropriate `properties` section
 3. Follow the OpenAPI v3 schema format
 4. Test with `kubectl apply --dry-run=client -f config/crd/`

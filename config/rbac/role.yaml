@@ -5,32 +5,6 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - alertreaction.io
-  resources:
-  - alertreactions
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - alertreaction.io
-  resources:
-  - alertreactions/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - alertreaction.io
-  resources:
-  - alertreactions/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - batch
   resources:
   - jobs
@@ -58,3 +32,29 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - karo.io
+  resources:
+  - alertreactions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - karo.io
+  resources:
+  - alertreactions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - karo.io
+  resources:
+  - alertreactions/status
+  verbs:
+  - get
+  - patch
+  - update
