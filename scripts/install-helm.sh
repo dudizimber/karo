@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Alert Reaction Operator Helm Chart Installation Script
+# Karo Helm Chart Installation Script
 
 CHART_DIR="charts/karo"
 RELEASE_NAME="karo"
@@ -29,8 +29,9 @@ print_error() {
 
 # Help function
 show_help() {
+    usage() {
     cat << EOF
-Alert Reaction Operator Helm Installation Script
+Karo Helm Installation Script
 
 Usage: $0 [OPTIONS]
 
@@ -96,7 +97,7 @@ install_chart() {
         $extra_args; then
         
         if [ "$DRY_RUN" != "true" ]; then
-            print_info "Successfully ${action}ed Alert Reaction Operator!"
+            print_info "Successfully ${action}ed Karo!"
             print_info ""
             print_info "To check the status:"
             print_info "  kubectl get deployment $RELEASE_NAME -n $NAMESPACE"
@@ -108,25 +109,25 @@ install_chart() {
             print_info "  kubectl logs -l app.kubernetes.io/name=karo -n $NAMESPACE"
         fi
     else
-        print_error "Failed to $action Alert Reaction Operator"
+        print_error "Failed to $action Karo"
         exit 1
     fi
 }
 
 # Uninstall the chart
 uninstall_chart() {
-    print_warning "This will uninstall the Alert Reaction Operator and remove all related resources."
+    print_warning "This will uninstall Karo and remove all related resources."
     print_warning "AlertReaction custom resources will remain unless manually deleted."
     read -p "Are you sure? (y/N): " -n 1 -r
     echo
     
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         if helm uninstall $RELEASE_NAME --namespace $NAMESPACE; then
-            print_info "Successfully uninstalled Alert Reaction Operator!"
+            print_info "Successfully uninstalled Karo!"
             print_warning "Note: CRDs and custom resources may still exist."
             print_info "To remove CRDs: kubectl delete crd alertreactions.karo.io"
         else
-            print_error "Failed to uninstall Alert Reaction Operator"
+            print_error "Failed to uninstall Karo"
             exit 1
         fi
     else
@@ -194,7 +195,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Main execution
-print_info "Alert Reaction Operator Helm Installation"
+print_info "Karo Helm Installation"
 print_info "Chart: $CHART_DIR"
 print_info "Release: $RELEASE_NAME"
 print_info "Namespace: $NAMESPACE"

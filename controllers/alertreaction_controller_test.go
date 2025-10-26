@@ -200,12 +200,12 @@ func TestAlertReactionReconciler_ProcessAlert(t *testing.T) {
 	}
 
 	job := jobs.Items[0]
-	if job.Labels["alert-reaction/alert-name"] != "TestAlert" {
-		t.Errorf("Expected job label alert-reaction/alert-name=TestAlert, got %s", job.Labels["alert-reaction/alert-name"])
+	if job.Labels["karo/alert-name"] != "TestAlert" {
+		t.Errorf("Expected job label karo/alert-name=TestAlert, got %s", job.Labels["karo/alert-name"])
 	}
 
-	if job.Labels["alert-reaction/action-name"] != "test-action" {
-		t.Errorf("Expected job label alert-reaction/action-name=test-action, got %s", job.Labels["alert-reaction/action-name"])
+	if job.Labels["karo/action-name"] != "test-action" {
+		t.Errorf("Expected job label karo/action-name=test-action, got %s", job.Labels["karo/action-name"])
 	}
 
 	// Check environment variables
@@ -400,11 +400,11 @@ func TestCreateJobFromAction(t *testing.T) {
 
 	// Verify labels
 	expectedLabels := map[string]string{
-		"app.kubernetes.io/name":      "alert-reaction-job",
+		"app.kubernetes.io/name":      "karo-job",
 		"app.kubernetes.io/component": "job",
-		"alert-reaction/alert-name":   "TestAlert",
-		"alert-reaction/action-name":  "test-action",
-		"alert-reaction/owner":        "test-alert-reaction",
+		"karo/alert-name":             "TestAlert",
+		"karo/action-name":            "test-action",
+		"karo/owner":                  "test-alert-reaction",
 	}
 
 	for key, expectedValue := range expectedLabels {
@@ -818,11 +818,11 @@ func TestCreateJobFromAction_LabelGeneration(t *testing.T) {
 			alertName:         "HighCPUUsage",
 			actionName:        "notify-slack",
 			expectedLabels: map[string]string{
-				"app.kubernetes.io/name":      "alert-reaction-job",
+				"app.kubernetes.io/name":      "karo-job",
 				"app.kubernetes.io/component": "job",
-				"alert-reaction/alert-name":   "HighCPUUsage",
-				"alert-reaction/action-name":  "notify-slack",
-				"alert-reaction/owner":        "cpu-alert-reaction",
+				"karo/alert-name":             "HighCPUUsage",
+				"karo/action-name":            "notify-slack",
+				"karo/owner":                  "cpu-alert-reaction",
 			},
 			shouldSanitizeLabel: false,
 		},
@@ -832,11 +832,11 @@ func TestCreateJobFromAction_LabelGeneration(t *testing.T) {
 			alertName:         "DB:Connection/Failed",
 			actionName:        "Send-Email+Alert",
 			expectedLabels: map[string]string{
-				"app.kubernetes.io/name":      "alert-reaction-job",
+				"app.kubernetes.io/name":      "karo-job",
 				"app.kubernetes.io/component": "job",
-				"alert-reaction/alert-name":   "DB-Connection-Failed",
-				"alert-reaction/action-name":  "Send-Email-Alert",
-				"alert-reaction/owner":        "Database-Connection-Error",
+				"karo/alert-name":             "DB-Connection-Failed",
+				"karo/action-name":            "Send-Email-Alert",
+				"karo/owner":                  "Database-Connection-Error",
 			},
 			shouldSanitizeLabel: true,
 		},
@@ -846,7 +846,7 @@ func TestCreateJobFromAction_LabelGeneration(t *testing.T) {
 			alertName:         "VeryLongAlertNameThatExceedsSixtyThreeCharactersLimitForKubernetesLabels",
 			actionName:        "very-long-action-name-that-also-exceeds-sixty-three-characters",
 			expectedLabels: map[string]string{
-				"app.kubernetes.io/name":      "alert-reaction-job",
+				"app.kubernetes.io/name":      "karo-job",
 				"app.kubernetes.io/component": "job",
 				// These should be truncated to 63 characters and sanitized
 			},
@@ -858,11 +858,11 @@ func TestCreateJobFromAction_LabelGeneration(t *testing.T) {
 			alertName:         "___AlertName___",
 			actionName:        "---action-name---",
 			expectedLabels: map[string]string{
-				"app.kubernetes.io/name":      "alert-reaction-job",
+				"app.kubernetes.io/name":      "karo-job",
 				"app.kubernetes.io/component": "job",
-				"alert-reaction/alert-name":   "AlertName",
-				"alert-reaction/action-name":  "action-name",
-				"alert-reaction/owner":        "alert-reaction-456",
+				"karo/alert-name":             "AlertName",
+				"karo/action-name":            "action-name",
+				"karo/owner":                  "alert-reaction-456",
 			},
 			shouldSanitizeLabel: true,
 		},
@@ -906,8 +906,8 @@ func TestCreateJobFromAction_LabelGeneration(t *testing.T) {
 			}
 
 			// Check standard labels
-			if job.Labels["app.kubernetes.io/name"] != "alert-reaction-job" {
-				t.Errorf("Expected app.kubernetes.io/name=alert-reaction-job, got %s", job.Labels["app.kubernetes.io/name"])
+			if job.Labels["app.kubernetes.io/name"] != "karo-job" {
+				t.Errorf("Expected app.kubernetes.io/name=karo-job, got %s", job.Labels["app.kubernetes.io/name"])
 			}
 
 			if job.Labels["app.kubernetes.io/component"] != "job" {
@@ -926,9 +926,9 @@ func TestCreateJobFromAction_LabelGeneration(t *testing.T) {
 
 			// Check specific sanitized labels if needed
 			if tt.shouldSanitizeLabel {
-				alertNameLabel := job.Labels["alert-reaction/alert-name"]
-				actionNameLabel := job.Labels["alert-reaction/action-name"]
-				ownerLabel := job.Labels["alert-reaction/owner"]
+				alertNameLabel := job.Labels["karo/alert-name"]
+				actionNameLabel := job.Labels["karo/action-name"]
+				ownerLabel := job.Labels["karo/owner"]
 
 				// Verify they don't contain invalid characters
 				invalidCharPattern := regexp.MustCompile(`[^A-Za-z0-9_.-]`)

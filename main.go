@@ -126,5 +126,5 @@ func main() {
 	setupLog.Info("Received termination signal, shutting down...")
 	cancel()
 
-	setupLog.Info("Alert Reaction Operator stopped")
+	setupLog.Info("Karo stopped")
 }

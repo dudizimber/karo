@@ -34,7 +34,7 @@ print_header() {
 
 # Function to create initial CHANGELOG.md
 create_initial_changelog() {
-    local project_name=${1:-"Alert Reaction Operator"}
+    local project_name=${1:-"Karo"}
     local repo_url=${2:-"https://github.com/dudizimber/karo"}
     
     cat > "$CHANGELOG_FILE" << EOF

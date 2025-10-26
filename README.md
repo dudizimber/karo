@@ -110,7 +110,7 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: 'alert-reaction-webhook'
+  receiver: 'karo-webhook'
 
 receivers:
 - name: 'karo-webhook'
@@ -151,7 +151,7 @@ spec:
 scripts/test-webhook.sh http://localhost:9090/webhook
 
 # Check created jobs
-kubectl get jobs -l alert-reaction/alert-name=HighCPUUsage
+kubectl get jobs -l karo/alert-name=HighCPUUsage
 ```
 
 ## Configuration
@@ -496,10 +496,10 @@ kubectl get alertreactions -o custom-columns="NAME:.metadata.name,ALERT:.spec.al
 #### Monitor Created Jobs
 ```bash
 # List jobs created by the operator
-kubectl get jobs -l alert-reaction/alert-name
+kubectl get jobs -l karo/alert-name
 
 # View jobs for a specific alert
-kubectl get jobs -l alert-reaction/alert-name=HighCPUUsage
+kubectl get jobs -l karo/alert-name=HighCPUUsage
 
 # Check job status with details
 kubectl get jobs -o wide

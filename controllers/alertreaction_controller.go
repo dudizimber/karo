@@ -307,11 +307,11 @@ func (r *AlertReactionReconciler) createJobFromAction(ctx context.Context, alert
 			Name:      jobName,
 			Namespace: alertReaction.Namespace,
 			Labels: map[string]string{
-				"app.kubernetes.io/name":      "alert-reaction-job",
+				"app.kubernetes.io/name":      "karo-job",
 				"app.kubernetes.io/component": "job",
-				"alert-reaction/alert-name":   sanitizeLabelValue(alertReaction.Spec.AlertName),
-				"alert-reaction/action-name":  sanitizeLabelValue(action.Name),
-				"alert-reaction/owner":        sanitizeLabelValue(alertReaction.Name),
+				"karo/alert-name":             sanitizeLabelValue(alertReaction.Spec.AlertName),
+				"karo/action-name":            sanitizeLabelValue(action.Name),
+				"karo/owner":                  sanitizeLabelValue(alertReaction.Name),
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				{

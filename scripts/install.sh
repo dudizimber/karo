@@ -2,10 +2,10 @@
 
 set -e
 
-echo "Installing Kubernetes Alert Reaction Operator..."
+echo "Installing Karo (Kubernetes Alert Reaction Operator)..."
 
-# Create namespace if it doesn't exist
-kubectl create namespace alert-reaction-system --dry-run=client -o yaml | kubectl apply -f -
+# Create namespace
+kubectl create namespace karo-system --dry-run=client -o yaml | kubectl apply -f -
 
 # Install CRD
 echo "Installing Custom Resource Definition..."

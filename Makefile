@@ -112,7 +112,7 @@ status: ## Show status of AlertReaction resources.
 
 .PHONY: jobs
 jobs: ## Show jobs created by the operator.
-	kubectl get jobs -l app.kubernetes.io/name=alert-reaction-job
+	kubectl get jobs -l app.kubernetes.io/name=karo-job
 
 .PHONY: clean
 clean: ## Clean up build artifacts.

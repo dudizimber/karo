@@ -199,10 +199,10 @@ var _ = Describe("AlertReaction Controller", func() {
 			Expect(jobList.Items).To(HaveLen(1))
 
 			job := jobList.Items[0]
-			Expect(job.Labels).To(HaveKey("alert-reaction/alert-name"))
-			Expect(job.Labels["alert-reaction/alert-name"]).To(Equal(AlertName))
-			Expect(job.Labels).To(HaveKey("alert-reaction/action-name"))
-			Expect(job.Labels["alert-reaction/action-name"]).To(Equal("test-action"))
+			Expect(job.Labels).To(HaveKey("karo/alert-name"))
+			Expect(job.Labels["karo/alert-name"]).To(Equal(AlertName))
+			Expect(job.Labels).To(HaveKey("karo/action-name"))
+			Expect(job.Labels["karo/action-name"]).To(Equal("test-action"))
 		})
 
 		It("Should update AlertReaction status after processing alerts", func() {
