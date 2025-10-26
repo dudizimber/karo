@@ -1,6 +1,6 @@
 apiVersion: v1
 entries:
-  alert-reaction-operator:
+  karo:
   - annotations:
       artifacthub.io/changes: |
         - kind: added
@@ -11,29 +11,29 @@ entries:
           description: Webhook endpoint for Prometheus/Alertmanager integration
       artifacthub.io/containsSecurityUpdates: "false"
       artifacthub.io/images: |
-        - name: alert-reaction-operator
-          image: docker.io/dudizimber/k8s-alert-reaction-operator:latest
+        - name: karo
+          image: docker.io/dudizimber/karo:latest
       artifacthub.io/license: Apache-2.0
       artifacthub.io/links: |
         - name: Chart Source
-          url: https://github.com/dudizimber/k8s-alert-reaction-operator/tree/main/charts/alert-reaction-operator
+          url: https://github.com/dudizimber/karo/tree/main/charts/karo
         - name: Official Actions Repository
-          url: https://github.com/dudizimber/alert-reactions
+          url: https://github.com/dudizimber/karo-reactions
       artifacthub.io/operator: "true"
       artifacthub.io/operatorCapabilities: Basic Install
       artifacthub.io/prerelease: "false"
       category: Monitoring
-      charts.openshift.io/name: Alert Reaction Operator
+      charts.openshift.io/name: Karo
       charts.openshift.io/provider: Community
-      charts.openshift.io/supportURL: https://github.com/dudizimber/k8s-alert-reaction-operator/issues
+      charts.openshift.io/supportURL: https://github.com/dudizimber/karo/issues
       licenses: Apache-2.0
     apiVersion: v2
-    appVersion: v0.1.12
-    created: "2025-10-08T13:15:41.49671012Z"
-    description: A Kubernetes operator that creates Jobs in response to Prometheus
-      alerts
-    digest: d4f5cedcaf2613c33e9652621c4214358000cfc481234fe59f28abd5e44ecfa8
-    home: https://github.com/dudizimber/k8s-alert-reaction-operator
+    appVersion: v0.2.0
+    created: "2025-10-26T09:43:34.57683597Z"
+    description: Karo (Kubernetes Alert Reaction Operator) - creates Jobs in response
+      to Prometheus alerts
+    digest: 271a040f28dc964b896b5ccf4b17eda28c4303290d053a61b96387d1d0a21087
+    home: https://github.com/dudizimber/karo
     keywords:
     - kubernetes
     - operator
@@ -45,17 +45,18 @@ entries:
     - incident-response
     - webhooks
     - crd
+    - karo
     kubeVersion: '>=1.19.0-0'
     maintainers:
     - email: zimber.dudi@gmail.com
       name: David Zimberknopf
       url: https://github.com/dudizimber
-    name: alert-reaction-operator
+    name: karo
     sources:
-    - https://github.com/dudizimber/k8s-alert-reaction-operator
-    - https://github.com/dudizimber/k8s-alert-reaction-operator
+    - https://github.com/dudizimber/karo
+    - https://github.com/dudizimber/karo
     type: application
     urls:
-    - https://github.com/dudizimber/k8s-alert-reaction-operator/releases/download/v0.1.12/alert-reaction-operator-v0.1.12.tgz
-    version: v0.1.12
-generated: "2025-10-08T13:15:41.495741936Z"
+    - https://github.com/dudizimber/karo/releases/download/v0.2.0/karo-v0.2.0.tgz
+    version: v0.2.0
+generated: "2025-10-26T09:43:34.575410174Z"

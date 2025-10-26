@@ -1,33 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Alert Reaction Operator Helm Repository</title>
+  <title>Karo Helm Repository</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; }
     .code { background: #f4f4f4; padding: 10px; border-radius: 4px; }
   </style>
 </head>
 <body>
-  <h1>Alert Reaction Operator Helm Repository</h1>
-  <p>This is the official Helm repository for the Alert Reaction Operator.</p>
+  <h1>Karo (Kubernetes Alert Reaction Operator) Helm Repository</h1>
+  <p>This is the official Helm repository for Karo.</p>
   
   <h2>Add Repository</h2>
   <div class="code">
-    <code>helm repo add alert-reaction-operator https://dudizimber.github.io/k8s-alert-reaction-operator/</code><br>
+    <code>helm repo add karo https://dudizimber.github.io/karo/</code><br>
     <code>helm repo update</code>
   </div>
   
   <h2>Install Chart</h2>
   <div class="code">
-    <code>helm install my-operator alert-reaction-operator/alert-reaction-operator</code>
+    <code>helm install my-karo karo/karo</code>
   </div>
   
   <h2>Available Charts</h2>
   <ul>
     <li><a href="index.yaml">index.yaml</a> - Helm repository index</li>
-    <li><a href="alert-reaction-operator-v0.1.12.tgz">alert-reaction-operator-v0.1.12.tgz</a></li>
+    <li><a href="karo-v0.2.0.tgz">karo-v0.2.0.tgz</a></li>
   </ul>
   
-  <p>For more information, visit the <a href="https://github.com/dudizimber/k8s-alert-reaction-operator">project repository</a>.</p>
+  <p>For more information, visit the <a href="https://github.com/dudizimber/karo">project repository</a>.</p>
 </body>
 </html>
