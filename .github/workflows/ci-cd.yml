@@ -161,7 +161,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -221,7 +221,7 @@ jobs:
       - name: Load Docker image into kind
         run: |
           # Get the image tag from previous job
-          IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
           docker pull $IMAGE_TAG
           kind load docker-image $IMAGE_TAG --name test-cluster
 
