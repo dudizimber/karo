@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Prepare for next release
 
+## [0.2.0] - 2025-10-26
+
+### Added
+- Prepare for next release
+
 ## [0.1.12] - 2025-10-08
 
 ### Added
@@ -86,5 +91,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Manual CRD installation requirement for users
 - Release job from CI/CD pipeline (moved to separate workflow)
 
-[Unreleased]: https://github.com/dudizimber/k8s-alert-reaction-operator/compare/v0.1.12...HEAD
+[Unreleased]: https://github.com/dudizimber/karo/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/dudizimber/karo/releases/tag/v0.2.0
 [0.1.12]: https://github.com/dudizimber/k8s-alert-reaction-operator/releases/tag/v0.1.12
