@@ -6,6 +6,7 @@
 [![CI/CD Pipeline](https://github.com/dudizimber/karo/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/dudizimber/karo/actions/workflows/ci-cd.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/dudizimber/karo)](https://goreportcard.com/report/github.com/dudizimber/karo)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Discord](https://img.shields.io/discord/1431280788627914833?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/GDugnYC2sB)
 
 A Kubernetes operator that creates Jobs in response to Prometheus alerts received via AlertManager webhooks.
 
